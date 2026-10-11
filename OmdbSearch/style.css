@@ -1,0 +1,111 @@
+body {
+    margin: 0;
+    padding: 24px 16px;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    background: #fbf3ea;
+    color: #222;
+}
+
+h2 {
+    text-align: center;
+    font-size: 18px;
+}
+
+/* --- форма поиска --- */
+.search-box {
+    max-width: 340px;
+    margin: 0 auto;
+    padding: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-box input,
+.search-box select {
+    padding: 6px;
+    font-size: 14px;
+}
+
+.search-box button {
+    grid-column: 1 / -1;
+    padding: 6px;
+    cursor: pointer;
+}
+
+/* --- карточки фильмов --- */
+#films {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.film-card {
+    width: 260px;
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.film-card img {
+    width: 90px;
+    height: 130px;
+    object-fit: cover;
+}
+
+.film-card button {
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+.not-found {
+    width: 100%;
+    text-align: center;
+    color: #c0392b;
+    font-weight: bold;
+}
+
+/* --- кнопки страниц --- */
+#pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    margin: 20px 0;
+}
+
+#pagination button {
+    min-width: 32px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+#pagination button.active {
+    background: #333;
+    color: #fff;
+}
+
+/* --- инфа о фильме --- */
+#details {
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+}
+
+#details img {
+    width: 200px;
+}
+
+#details table td {
+    padding: 4px 8px;
+    vertical-align: top;
+}

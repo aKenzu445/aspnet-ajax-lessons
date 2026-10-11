@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Поиск фильмов</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- форма поиска. не <form> специально, обычная форма перезагружает страницу, а надо ajax -->
+    <section class="search">
+        <h2>Search:</h2>
+        <div class="search-box">
+            <label for="title">Title:</label>
+            <input id="title" type="text" placeholder="Например: hello">
+
+            <label for="type">Type:</label>
+            <select id="type">
+                <option value="movie">Movie</option>
+                <option value="series">Series</option>
+                <option value="episode">Episode</option>
+            </select>
+
+            <button id="searchBtn">Search</button>
+        </div>
+    </section>
+
+    <!-- сюда js будет пихать результаты -->
+    <section id="films"></section>
+    <div id="pagination"></div>
+    <section id="details"></section>
+
+    <!-- сначала ключ потом app.js, иначе app.js ключа не увидит -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
