@@ -231,30 +231,36 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
 });
 
 // --- DELETE /api/tasks/{id} (зан1 зад10) ---
-tasksApi.MapDelete("/{id:int}", (int id) =>
+// зан5 зад9: удаляю уже из базы
+tasksApi.MapDelete("/{id:int}", async (int id, TaskDbContext db) =>
 {
-    bool deleted = TaskStorage.Delete(id);
-
-    if (!deleted)
-    {
-        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
-    }
-
-    return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
-});
-
-// --- PUT /api/tasks/{id} - галочка выполнено (дз зан1) ---
-// шлю { "isDone": true } -> 200 и задача
-tasksApi.MapPut("/{id:int}", (int id, UpdateTaskStatusRequest request) =>
-{
-    TaskItem? task = TaskStorage.GetById(id);
+    TaskItem? task = await db.Tasks.FindAsync(id);
 
     if (task == null)
     {
         return Results.NotFound(new { Error = "Задача не найдена" });       // 404
     }
 
-    task.IsDone = request.IsDone;      // меняю объект прям в списке
+    db.Tasks.Remove(task);           // помечаю на удаление
+    await db.SaveChangesAsync();     // делаю DELETE в базе
+
+    return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
+});
+
+// --- PUT /api/tasks/{id} - галочка выполнено (дз зан1) ---
+// шлю { "isDone": true } -> 200 и задача
+// зан5: тоже теперь через базу, иначе после удаления старого хранилища сломалось бы
+tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskStatusRequest request, TaskDbContext db) =>
+{
+    TaskItem? task = await db.Tasks.FindAsync(id);
+
+    if (task == null)
+    {
+        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+    }
+
+    task.IsDone = request.IsDone;    // EF следит за изменениями загруженного объекта...
+    await db.SaveChangesAsync();     // ...и на сохранении сделает UPDATE тока IsDone
     return Results.Ok(task);                                                // 200
 });
 

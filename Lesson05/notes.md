@@ -130,3 +130,21 @@ GET  /api/tasks/1                           → 200 (раньше было 404)
 sqlite3 tasks.db "SELECT * FROM Tasks;"     → 1|Изучить EF Core|0
 ```
 Данные реально лежат в файле базы.
+
+## Задача 9. DELETE удаляет из базы (+ PUT из ДЗ занятия 1)
+
+```csharp
+TaskItem? task = await db.Tasks.FindAsync(id);
+if (task == null) return Results.NotFound(...);   // 404, как раньше
+db.Tasks.Remove(task);
+await db.SaveChangesAsync();                       // DELETE в базе
+```
+`PUT /api/tasks/{id}` (отметка «выполнено» из ДЗ занятия 1) тоже переведён на базу. Иначе после удаления старого хранилища он бы перестал работать. EF **отслеживает изменения** загруженного объекта: достаточно изменить `task.IsDone` и вызвать `SaveChangesAsync()`, EF сам выполнит `UPDATE`.
+
+**Проверка:**
+```
+PUT    /api/tasks/1 {"isDone":true} → 200, в базе: 1|Изучить EF Core|1
+DELETE /api/tasks/1                 → 200
+GET    /api/tasks/1                 → 404 (удалена из базы)
+DELETE /api/tasks/999               → 404
+```
