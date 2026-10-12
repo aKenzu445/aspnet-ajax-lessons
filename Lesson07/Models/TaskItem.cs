@@ -13,10 +13,11 @@ public class TaskItem
     // зан6 зад4: [Display] - нормальное имя поля для <label asp-for>
     // зан6 зад7: DataAnnotations - правила проверки прям на свойстве:
     //   [Required] - обязательно (пусто или одни пробелы - ошибка)
-    //   [StringLength] - не длиннее 100, EF тоже это учитывает
+    //   [StringLength] - от 3 до 100 символов, EF тоже учитывает максимум
     [Display(Name = "Название")]
     [Required(ErrorMessage = "Название обязательно")]
-    [StringLength(100, ErrorMessage = "Не более 100 символов")]
+    // зан7 зад4: минимум 3 символа
+    [StringLength(100, MinimumLength = 3, ErrorMessage = "От 3 до 100 символов")]
     public string Title { get; set; } = "";     // текст задачи (по умолчанию пусто)
     public bool IsDone { get; set; }            // сделана или нет (по умолчанию false)
 
