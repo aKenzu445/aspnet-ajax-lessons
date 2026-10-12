@@ -8,6 +8,10 @@ using Lesson1.WebServer.Models;   // TaskItem - класс задачи (пап�
 // builder - тут настраиваю сервисы и конфиг
 var builder = WebApplication.CreateBuilder(args);
 
+// === зан3 зад1: подключаю razor pages ===
+// AddRazorPages регает всё что нужно чтоб .cshtml превращались в html
+builder.Services.AddRazorPages();
+
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
@@ -223,6 +227,10 @@ tasksApi.MapPut("/{id:int}", (int id, UpdateTaskStatusRequest request) =>
     task.IsDone = request.IsDone;      // меняю объект прям в списке
     return Results.Ok(task);                                                // 200
 });
+
+// === зан3 зад1: маршруты для всех razor страниц из Pages ===
+// адрес берется из имени файла: Pages/Test.cshtml -> /Test, Pages/Index.cshtml -> /
+app.MapRazorPages();
 
 // === зан2 зад8: тестовый endpoint который специально падает ===
 app.MapGet("/api/crash-test", () =>
