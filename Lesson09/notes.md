@@ -84,5 +84,5 @@ PUT /api/tasks/999 → 404
 **Проверка:**
 ```
 GET /api/categories → 200
-[{"id":1,"name":"Работа","taskCount":1},{"id":2,"name":"Учёба","taskCount":2},{"id":3,"name":"Личное","taskCount":1}]
+[{"id":1,"name":"Работа","taskCount":0},{"id":2,"name":"Учёба","taskCount":3},{"id":3,"name":"Личное","taskCount":1}]
 ```
