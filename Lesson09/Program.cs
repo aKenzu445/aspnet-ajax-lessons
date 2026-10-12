@@ -349,6 +349,15 @@ tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskDto request, TaskDbContext
     return Results.Ok(TaskDto.FromEntity(task));                            // 200
 });
 
+// === зан9 зад5: список категорий GET /api/categories ===
+// -> [ { "id": 1, "name": "Работа", "taskCount": 4 }, ... ]
+// Select сразу делает DTO прям в запросе: c.Tasks.Count() станет SELECT COUNT(*), задачи не грузятся, Include не нужен
+app.MapGet("/api/categories", async (TaskDbContext db) =>
+    await db.Categories
+        .OrderBy(c => c.Id)
+        .Select(c => new CategoryDto(c.Id, c.Name, c.Tasks.Count()))
+        .ToListAsync());
+
 // === зан3 зад1: маршруты для всех razor страниц из Pages ===
 // адрес берется из имени файла: Pages/Test.cshtml -> /Test, Pages/Index.cshtml -> /
 app.MapRazorPages();

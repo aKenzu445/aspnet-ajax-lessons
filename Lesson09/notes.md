@@ -69,3 +69,20 @@ PUT /api/tasks/2 {"title":"","isDone":true,"categoryId":77} → 400 {"errors":["
 PUT /api/tasks/999 → 404
 Чекбокс на /Tasks у «Курсовая» → зачёркнута; GET /api/tasks/3 → isDone: true, название и категория не потерялись
 ```
+
+## Задача 5. CategoryDto и GET /api/categories
+
+- `Dtos/CategoryDto.cs`: `record CategoryDto(int Id, string Name, int TaskCount)`. Вместо списка задач — **количество**, чтобы снова не получить цикл.
+- `GET /api/categories`:
+  ```csharp
+  db.Categories.OrderBy(c => c.Id)
+      .Select(c => new CategoryDto(c.Id, c.Name, c.Tasks.Count()))   // проекция прямо в SQL
+      .ToListAsync()
+  ```
+  `c.Tasks.Count()` EF переводит в подзапрос `SELECT COUNT(*)`. Задачи в память не загружаются, `Include` не нужен.
+
+**Проверка:**
+```
+GET /api/categories → 200
+[{"id":1,"name":"Работа","taskCount":1},{"id":2,"name":"Учёба","taskCount":2},{"id":3,"name":"Личное","taskCount":1}]
+```
