@@ -1,5 +1,7 @@
 // занятие 1. веб-сервер на asp.net core и первые ajax запросы
 using System.Globalization;
+using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
+using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
 
 // builder - тут настраиваю сервисы и конфиг
 var builder = WebApplication.CreateBuilder(args);
@@ -77,6 +79,10 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 
     return Results.Ok(new { Result = x / y });                                  // 200
 });
+
+// === зад8: список задач из памяти сервака (GET) ===
+// GET /api/tasks -> массив задач в json
+app.MapGet("/api/tasks", () => TaskStorage.GetAll());
 
 // запуск сервака: начинает слушать порт и обрабатывать запросы
 app.Run();
