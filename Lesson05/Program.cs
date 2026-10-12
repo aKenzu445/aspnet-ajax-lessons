@@ -186,17 +186,22 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 // адреса не поменялись, поэтому js трогать не пришлось
 var tasksApi = app.MapGroup("/api/tasks");
 
-// --- GET /api/tasks - список (зан1 зад8) ---
-// отдает массив задач в json
-tasksApi.MapGet("/", () => TaskStorage.GetAll());
+// --- Занятие 1, задача 8. Список задач (GET /api/tasks) ---
+// → JSON-массив [ { "id": 1, "title": "...", "isDone": false }, ... ]
+// Занятие 5, задача 7: данные читаются из БАЗЫ через EF Core, а не из списка в памяти.
+// Параметр TaskDbContext db ASP.NET Core подставляет сам (зарегистрирован через AddDbContext).
+// async/await — запрос к базе идёт "в фоне", поток сервера не простаивает в ожидании.
+// ToListAsync — выполнить запрос к таблице Tasks и вернуть результат списком.
+tasksApi.MapGet("/", async (TaskDbContext db) => await db.Tasks.ToListAsync());
 
 // --- GET /api/tasks/{id} - одна задача (зан2 зад4-5) ---
 // /api/tasks/1 -> 200, /api/tasks/99 -> 404
 // {id:int} - ограничение маршрута, пускает тока если id число. abc -> 404 сразу, до моего кода
 // (без :int на abc было 400 с BadHttpRequestException)
-tasksApi.MapGet("/{id:int}", (int id) =>
+// зан5 зад7: FindAsync ищет по ключу Id, не нашел - null
+tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 {
-    TaskItem? task = TaskStorage.GetById(id);
+    TaskItem? task = await db.Tasks.FindAsync(id);
 
     if (task == null)
     {

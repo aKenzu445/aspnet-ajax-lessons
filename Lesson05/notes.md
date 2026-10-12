@@ -104,3 +104,14 @@ $ sqlite3 tasks.db "SELECT MigrationId FROM __EFMigrationsHistory;"
 - `Title` — текст (`TEXT`), `IsDone` — в SQLite нет типа bool, поэтому `INTEGER` (0/1);
 - таблица **пуста**: данные из старого списка в памяти не переносились;
 - служебная таблица `__EFMigrationsHistory` хранит, какие миграции уже применены.
+
+## Задача 7. GET-запросы читают из базы
+
+`GET /api/tasks` → `await db.Tasks.ToListAsync()`, `GET /api/tasks/{id:int}` → `await db.Tasks.FindAsync(id)` (логика 404 сохранена).
+
+**Результат:**
+```
+GET /api/tasks   → 200 []                                  (пустой массив)
+GET /api/tasks/1 → 404 {"error":"Задача не найдена"}
+```
+**Почему список пуст:** endpoints теперь читают **другой источник** — таблицу `Tasks` в файле `tasks.db`, а она пока пустая (задача 6). Три «стартовые» задачи живут в старом `TaskStorage` в памяти, и Razor-страница `/Tasks` пока показывает их. Два источника данных временно **рассинхронизированы**, это исправит задача 10.
