@@ -63,6 +63,26 @@ app.Use(async (context, next) =>
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// === зан2 зад10: режим техработ ===
+// пришел заголовок X-Maintenance: true -> сразу 503, дальше ничего не выполняется
+// стоит после логов (чтоб в лог попало) и после UseStaticFiles (статику не блочим, так в задании)
+// но до UseRouting и всех endpoints
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers["X-Maintenance"] == "true")
+    {
+        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;   // 503
+        await context.Response.WriteAsJsonAsync(new { error = "Сервер временно недоступен, ведутся технические работы" });
+        return;   // next() НЕ зову - дальше запрос не идет
+    }
+
+    await next();
+});
+
+// маршрутизация: решает какой endpoint подходит под адрес
+// вызвал явно, чтоб было видно - всё что выше выполняется ДО неё
+app.UseRouting();
+
 // === зан2 зад7: проверка api ключа для POST/PUT/DELETE ===
 // сам класс в папке Middleware. стоит до endpoints, так что без ключа до обработчиков даже не дойдет
 app.UseMiddleware<ApiKeyMiddleware>();
