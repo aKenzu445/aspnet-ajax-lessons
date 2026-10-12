@@ -1,30 +1,20 @@
 @page
-@* Занятие 4, задача 6. "Быстрый прототип" страницы статистики — БЕЗ файла Stats.cshtml.cs,
-   то есть без строго типизированной модели. Вся логика прямо в .cshtml, данные — через ViewBag.
-
-   ПРОБЛЕМЫ такого подхода:
-   1) логику в .cshtml сложно тестировать: её нельзя вызвать из unit-теста, как метод класса;
-   2) ViewBag — dynamic: опечатку (ViewBag.TotlCount) компилятор НЕ найдёт,
-      на странице просто молча будет пусто (null);
-   3) HTML вперемешку с вычислениями плохо читается и тяжело поддерживается.
-   Поэтому в задаче 7 логика переносится в StatsModel (Stats.cshtml.cs). *@
+@model StatsModel
+@* зан4 зад7: статистика теперь через модель с типами
+   было (зад6): логика тут + ViewBag.TotalCount (dynamic, компилятор не проверяет)
+   стало: логика в StatsModel.OnGet(), тут тока вывод Model.TotalCount
+   опечатка Model.TotlCount - ошибка компиляции CS1061, rider сразу красным
+   опечатка ViewBag.TotlCount - компилится, а на странице молча пусто (null) *@
 @{
     ViewData["Title"] = "Статистика";
-
-    // Обращаемся напрямую к общему хранилищу — тому же, что использует /api/tasks
-    List<TaskItem> tasks = TaskStorage.GetAll();
-
-    ViewBag.TotalCount = tasks.Count;                         // всего задач
-    ViewBag.DoneCount = tasks.Count(t => t.IsDone);           // LINQ Count с условием: выполненные
-    ViewBag.UndoneCount = tasks.Count(t => !t.IsDone);        // невыполненные
 }
 
 <h1>Статистика</h1>
 
 <section class="card">
     <table class="info-table">
-        <tr><td>Всего:</td><td>@ViewBag.TotalCount</td></tr>
-        <tr><td>Выполнено:</td><td>@ViewBag.DoneCount</td></tr>
-        <tr><td>Не выполнено:</td><td>@ViewBag.UndoneCount</td></tr>
+        <tr><td>Всего:</td><td>@Model.TotalCount</td></tr>
+        <tr><td>Выполнено:</td><td>@Model.DoneCount</td></tr>
+        <tr><td>Не выполнено:</td><td>@Model.UndoneCount</td></tr>
     </table>
 </section>
