@@ -285,3 +285,22 @@ input.input-validation-error {
     font-size: 12px;
     white-space: nowrap;
 }
+
+/* --- кнопки назад/далее (зан8 зад9) --- */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.pager a {
+    color: #2457a6;
+}
+
+.pager .disabled {
+    color: #bbb;
+}

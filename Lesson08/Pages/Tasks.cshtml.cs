@@ -25,6 +25,13 @@ public class TasksModel : PageModel
     // стартовый список задач для серверной отрисовки (SSR)
     public List<TaskItem> InitialTasks { get; set; } = new();
 
+    // === зан8 зад9: пагинация ===
+    // const - константа, 5 задач на страницу (удобно проверять, обычно 10-20)
+    public const int PageSize = 5;
+    public int CurrentPage { get; set; } = 1;   // номер открытой страницы (с 1)
+    public int TotalPages { get; set; }         // сколько всего страниц
+    public int TotalCount { get; set; }         // сколько задач подходит под фильтр
+
     // дз зан5 -> зан8: все категории из таблицы Categories (для фильтра) и какая выбрана (null - все задачи)
     public List<Category> AllCategories { get; set; } = new();
     public int? SelectedCategoryId { get; set; }
@@ -41,17 +48,22 @@ public class TasksModel : PageModel
     [BindProperty]
     public TaskItem NewTask { get; set; } = new();
 
-    // OnGet срабатывает сам на GET /Tasks
-    // зан5: стал async, т.к. читает из базы
-    // дз зан5: category прилетает из адреса /Tasks?category=Работа (форма фильтра)
-    public async Task OnGetAsync(int? categoryId)
+    // OnGet вызывается автоматически при GET-запросе страницы (/Tasks).
+    // Занятие 5: стал асинхронным (async Task), потому что читает из базы.
+    // ДЗ занятия 5: параметр category приходит из адреса /Tasks?category=Работа (форма фильтра).
+    // Задача 9: номер страницы приходит из адреса /Tasks?pageNumber=2 (по умолчанию 1).
+    // ВАЖНО: параметр НЕ может называться page (как в тексте задания). В Razor Pages "page" —
+    // зарезервированное значение маршрута (путь самой страницы, "/Tasks"). Параметр int page
+    // получал бы "/Tasks" вместо номера и всегда оставался 1, а asp-route-page не добавлял бы
+    // номер в ссылку. Поэтому — pageNumber.
+    public async Task OnGetAsync(int? categoryId, int pageNumber = 1)
     {
-        await LoadPageDataAsync(categoryId);
+        await LoadPageDataAsync(categoryId, pageNumber);
     }
 
     // грузит всё что надо для страницы. зову из OnGetAsync и из OnPostAsync,
     // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
-    private async Task LoadPageDataAsync(int? categoryId)
+    private async Task LoadPageDataAsync(int? categoryId, int pageNumber)
     {
         // зан5 зад10: читаю из базы, тот же источник что у GET /api/tasks
         // зан8 зад6: EF НЕ тянет связанные данные сам - без Include у задачи Category == null, хотя CategoryId есть
@@ -64,7 +76,21 @@ public class TasksModel : PageModel
         {
             query = query.Where(t => t.CategoryId == categoryId);
         }
-        InitialTasks = await query.ToListAsync();   // только здесь запрос уходит в базу
+        // зад9: сначала считаю СКОЛЬКО задач подходит под фильтр (до Skip/Take)
+        // CountAsync - отдельный SELECT COUNT(*) с тем же WHERE
+        TotalCount = await query.CountAsync();
+        // (double) чтоб делилось с дробью: 12/5.0 = 2.4, Ceiling округляет вверх -> 3 страницы
+        TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
+        CurrentPage = pageNumber < 1 ? 1 : pageNumber;   // защита от 0 и минусов
+
+        // Порядок LINQ важен: Where (фильтр, выше) → OrderBy (сортировка) → Skip/Take (страница).
+        // Иначе "страница" была бы из неотсортированных или нефильтрованных данных.
+        InitialTasks = await query
+            .OrderByDescending(t => t.CreatedAt)          // пока сортировка по дате создания (новые сверху)
+            .Skip((CurrentPage - 1) * PageSize)          // пропустить задачи прошлых страниц
+            .Take(PageSize)                              // взять не больше 5
+            .ToListAsync();                              // <- тока тут запрос уходит в базу
+        // если страница левая (pageNumber=99) - Skip всё пропустит, будет пустой список, без 500
         SelectedCategoryId = categoryId;
 
         // зан8: категории из СВОЕЙ таблицы, не надо собирать их по задачам
@@ -102,7 +128,7 @@ public class TasksModel : PageModel
 
         if (!ModelState.IsValid)
         {
-            await LoadPageDataAsync(null);
+            await LoadPageDataAsync(null, 1);
             return Page();
         }
 

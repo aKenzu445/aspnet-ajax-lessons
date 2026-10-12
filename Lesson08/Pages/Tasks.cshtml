@@ -55,24 +55,55 @@
         @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
            Model.InitialTasks заполняется в TasksModel.OnGet() (Tasks.cshtml.cs)
            razor сам экранирует task.Title, так что html в названии не сработает *@
-        @* зад10: если задач нет - норм сообщение вместо пустого <ul></ul>
-           пустой список (скрыт через hidden) всё равно вывожу: js закинет туда первую задачу и спрячет сообщение без перезагрузки *@
-        @if (Model.InitialTasks.Count == 0)
-        {
-            <p id="emptyMessage" class="empty-message">Задач пока нет, добавьте первую!</p>
-            <ul id="taskList" class="task-list" hidden></ul>
-        }
-        else
-        {
-            <p id="emptyMessage" class="empty-message" hidden>Задач пока нет, добавьте первую!</p>
-            <ul id="taskList" class="task-list">
-                @foreach (var task in Model.InitialTasks)
-                {
-                    @* зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
-                    <partial name="_TaskItem" model="task" />
-                }
-            </ul>
-        }
+        @* зан8 зад9: список и кнопки страниц в #taskListBlock - после ajax js меняет ЭТОТ блок на свежий html с сервака *@
+        <div id="taskListBlock">
+            @if (Model.InitialTasks.Count == 0)
+            {
+                @* зан3 зад10: сообщение вместо пустого списка *@
+                <p class="empty-message">
+                    @(Model.TotalCount == 0 ? "Задач пока нет, добавьте первую!" : $"На странице {Model.CurrentPage} задач нет.")
+                </p>
+            }
+            else
+            {
+                <ul id="taskList" class="task-list">
+                    @foreach (var task in Model.InitialTasks)
+                    {
+                        @* зан3 зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
+                        <partial name="_TaskItem" model="task" />
+                    }
+                </ul>
+            }
+
+            @* === зан8 зад9: кнопки назад/далее ===
+               asp-route-pageNumber и asp-route-categoryId дописывают параметры в ссылку: /Tasks?pageNumber=2&categoryId=3
+               (не asp-route-page - "page" в razor pages занят, см Tasks.cshtml.cs)
+               на первой странице Назад неактивна, на последней Далее *@
+            @if (Model.TotalPages > 1 || Model.CurrentPage > 1)
+            {
+                <nav class="pager">
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <a asp-page="/Tasks" asp-route-pageNumber="@Math.Min(Model.CurrentPage - 1, Model.TotalPages)" asp-route-categoryId="@Model.SelectedCategoryId">&larr; Назад</a>
+                    }
+                    else
+                    {
+                        <span class="disabled">&larr; Назад</span>
+                    }
+
+                    <span>Страница @Model.CurrentPage из @Math.Max(Model.TotalPages, 1) (задач: @Model.TotalCount)</span>
+
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <a asp-page="/Tasks" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-categoryId="@Model.SelectedCategoryId">Далее &rarr;</a>
+                    }
+                    else
+                    {
+                        <span class="disabled">Далее &rarr;</span>
+                    }
+                </nav>
+            }
+        </div>
 
         <!-- зад9: добавить через ajax (без перезагрузки) -->
         <h3>Добавить задачу (AJAX)</h3>
@@ -126,12 +157,7 @@
         // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
         const API_KEY = "lesson2-secret";
 
-        // Занятие 8: названия категорий по их Id — для строк, которые рисует JavaScript.
-        // API отдаёт у задачи только categoryId; словарь Id → название формирует сервер (Razor)
-        // из таблицы Categories. Json.Serialize превращает C#-словарь в JS-объект { "1": "Работа", ... }
-        const CATEGORY_NAMES = @Json.Serialize(Model.AllCategories.ToDictionary(c => c.Id, c => c.Name));
-
-        // === зад8: грузим список задач ===
+        // === зан1 зад8 -> зан8: загрузка (обновление) списка ===
 
         // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
         function escapeHtml(text) {
@@ -140,70 +166,22 @@
             return div.innerHTML;
         }
 
-        // разметка одной строки списка
-        // зан3 зад6: ТА ЖЕ разметка что в partial Pages/Shared/_TaskItem.cshtml
-        // partial работает на серваке и js не может его вызвать при добавлении через ajax,
-        // поэтому тут собираю строку руками (клиентский рендеринг)
-        function taskToHtml(task) {
-            return `<li class="${task.isDone ? "done" : ""}">
-                        <input type="checkbox" ${task.isDone ? "checked" : ""}
-                               onchange="toggleTask(${task.id}, this)">
-                        <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
-                        ${task.categoryId && CATEGORY_NAMES[task.categoryId] ? `<span class="task-category">${escapeHtml(CATEGORY_NAMES[task.categoryId])}</span>` : ""}
-                        <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
-                        ${task.dueDate ? `<span class="task-due">срок: ${task.dueDate.substring(8, 10)}.${task.dueDate.substring(5, 7)}.${task.dueDate.substring(0, 4)}</span>` : ""}
-                        <a href="/Tasks/Edit/${task.id}" class="button-link">Редактировать</a>
-                        <button onclick="deleteTask(${task.id})">Удалить</button>
-                        <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
-                            <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryToken()}">
-                            <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
-                        </form>
-                    </li>`;
-        }
-
-        // зан5 зад11: дата создания как в partial _TaskItem.cshtml
-        // у задач созданных до миграции AddCreatedAt сервак отдает "0001-01-01T00:00:00"
-        function formatCreatedAt(createdAt) {
-            if (!createdAt || createdAt.startsWith("0001-01-01")) {
-                return "дата неизвестна";
-            }
-            const d = new Date(createdAt);
-            const pad = n => String(n).padStart(2, "0");   // 5 -> "05"
-            return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        }
-
-        // зан4 зад5: для обычной формы удаления в строке которую нарисовал js нужен токен защиты
-        // беру его из любой формы которую сгенерил razor
-        function antiforgeryToken() {
-            return document.querySelector('input[name="__RequestVerificationToken"]').value;
-        }
-
+        // зан8 зад9: список теперь с пагинацией, сортировкой и фильтром НА СЕРВАКЕ
+        // раньше после ajax js тянул GET /api/tasks и рисовал строки сам (taskToHtml) - это сбросило бы страницу и сортировку
+        // теперь прошу ЭТУ ЖЕ страницу (тот же адрес), беру из ответа #taskListBlock и подменяю
+        // плюс: страница/фильтр/сортировка не слетают, а разметка строки тока в partial _TaskItem.cshtml
         async function loadTasks() {
-            // Занятие 5, ДЗ: учитываем выбранный фильтр (?categoryId=... в адресе страницы),
-            // чтобы после добавления/удаления через AJAX не "сбросить" фильтр
-            const categoryId = new URLSearchParams(location.search).get("categoryId");
-            const url = categoryId ? `/api/tasks?categoryId=${encodeURIComponent(categoryId)}` : "/api/tasks";
-            const response = await fetch(url);
+            const response = await fetch(location.href);   // ajax запрос за html этой же страницы
 
-            // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
             if (!response.ok) {
-                const data = await response.json().catch(() => null);
-                showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+                showTaskMessage(`Ошибка ${response.status}`, true);
                 return;
             }
 
-            const tasks = await response.json();          // массив задач
-
-            const list = document.getElementById("taskList");
-            list.innerHTML = "";
-            for (const task of tasks) {
-                list.innerHTML += taskToHtml(task);
-            }
-
-            // зад10: "задач пока нет" показываю тока когда список пустой. hidden = true прячет, false показывает
-            const isEmpty = tasks.length === 0;
-            document.getElementById("emptyMessage").hidden = !isEmpty;
-            list.hidden = isEmpty;
+            const html = await response.text();                                // ответ - текст html
+            const doc = new DOMParser().parseFromString(html, "text/html");     // текст -> документ
+            document.getElementById("taskListBlock").innerHTML =
+                doc.getElementById("taskListBlock").innerHTML;                  // подменяю тока список
         }
 
         document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
