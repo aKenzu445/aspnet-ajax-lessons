@@ -53,3 +53,19 @@ POST {"title":"Новая задача","isDone":true,"id":999,"createdAt":"2020
    IsDone = false (а не true), Id = 5 от базы (а не 999), дата — текущая
 POST {"title":"аб"} → 400 {"errors":["От 3 до 100 символов"]}
 ```
+
+## Задача 4. UpdateTaskDto: полное обновление через PUT
+
+- `Dtos/UpdateTaskDto.cs`: `record UpdateTaskDto(string? Title, bool IsDone, int? CategoryId)`.
+- `PUT /api/tasks/{id:int}` теперь меняет **название, статус и категорию** (раньше только `isDone`). Ответ — `TaskDto`.
+- Проверка только изменяемых полей: `Validator.TryValidateProperty(title, new ValidationContext(task) { MemberName = "Title" }, results)` + существование категории. Проверять весь объект (`TryValidateObject`) здесь **нельзя**: у старой задачи срок мог уже пройти, и `[MustBeFutureOrToday]` не дал бы даже отметить её выполненной.
+- **JS страницы `/Tasks`:** чекбокс «выполнено» отправляет полный набор `{ title, isDone, categoryId }`. Название и категорию он берёт из `data-title` / `data-category-id`, которые partial `_TaskItem` выводит у каждой строки.
+
+**Проверка:**
+```
+PUT /api/tasks/2 {"title":"Изучить ASP.NET Core","isDone":true,"categoryId":2}
+→ 200 {"id":2,"title":"Изучить ASP.NET Core","isDone":true,"categoryId":2,"categoryName":"Учёба",...}
+PUT /api/tasks/2 {"title":"","isDone":true,"categoryId":77} → 400 {"errors":["Название обязательно","Категория не найдена"]}
+PUT /api/tasks/999 → 404
+Чекбокс на /Tasks у «Курсовая» → зачёркнута; GET /api/tasks/3 → isDone: true, название и категория не потерялись
+```

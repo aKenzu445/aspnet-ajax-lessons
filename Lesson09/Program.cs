@@ -310,10 +310,9 @@ tasksApi.MapDelete("/{id:int}", async (int id, TaskDbContext db) =>
     return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
 });
 
-// --- PUT /api/tasks/{id} - галочка выполнено (дз зан1) ---
-// юзается чекбоксом на /Tasks (зан6 зад9), меняет тока IsDone, нет задачи -> 404
-// в зан5 тоже перевел на базу, а то после удаления старого хранилища всё бы сломалось
-tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskStatusRequest request, TaskDbContext db) =>
+// --- PUT /api/tasks/{id} (дз зан1 -> зан9 зад4) ---
+// раньше менял тока isDone, теперь всё сразу: title, isDone, categoryId (UpdateTaskDto)
+tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskDto request, TaskDbContext db) =>
 {
     TaskItem? task = await db.Tasks.FindAsync(id);
 
@@ -322,9 +321,32 @@ tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskStatusRequest request, Tas
         return Results.NotFound(new { Error = "Задача не найдена" });       // 404
     }
 
-    task.IsDone = request.IsDone;    // EF следит за изменениями загруженного объекта...
-    await db.SaveChangesAsync();     // ...и на сохранении сделает UPDATE тока IsDone
-    return Results.Ok(task);                                                // 200
+    // проверяю ТОКА то что меняется. TryValidateProperty гоняет атрибуты одного свойства (Title)
+    // весь объект (TryValidateObject) тут не катит: у старой задачи срок мог уже пройти,
+    // и [MustBeFutureOrToday] не дал бы даже отметить её выполненной
+    string title = request.Title?.Trim() ?? "";
+    var results = new List<ValidationResult>();
+    var context = new ValidationContext(task) { MemberName = nameof(TaskItem.Title) };
+    bool isValid = Validator.TryValidateProperty(title, context, results);
+
+    if (request.CategoryId.HasValue && !await db.Categories.AnyAsync(c => c.Id == request.CategoryId))
+    {
+        results.Add(new ValidationResult("Категория не найдена"));
+        isValid = false;
+    }
+
+    if (!isValid)
+    {
+        return Results.BadRequest(new { Errors = results.Select(r => r.ErrorMessage) });
+    }
+
+    task.Title = title;              // EF следит за изменениями загруженного объекта...
+    task.IsDone = request.IsDone;
+    task.CategoryId = request.CategoryId;
+    await db.SaveChangesAsync();     // ...и на сохранении сделает UPDATE измененных столбцов
+
+    await db.Entry(task).Reference(t => t.Category).LoadAsync();   // для categoryName в ответе
+    return Results.Ok(TaskDto.FromEntity(task));                            // 200
 });
 
 // === зан3 зад1: маршруты для всех razor страниц из Pages ===
@@ -350,5 +372,4 @@ public record EchoRequest(string? Text);
 // зад9: тело POST /api/tasks
 // (зан9 зад3: CreateTaskRequest поменял на Dtos/CreateTaskDto.cs)
 
-// дз: тело запроса PUT /api/tasks/{id}
-public record UpdateTaskStatusRequest(bool IsDone);
+// (зан9 зад4: старый UpdateTaskStatusRequest убрал, теперь Dtos/UpdateTaskDto.cs)

@@ -282,10 +282,16 @@
             const isDone = checkbox.checked;
             const li = checkbox.closest("li");     // строка где стоит галка
 
+            // Занятие 9, задача 4: PUT принимает UpdateTaskDto — полный набор полей.
+            // Название и категорию берём из data-атрибутов строки (их вывел partial _TaskItem).
             const response = await fetch(`/api/tasks/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                body: JSON.stringify({ isDone: isDone })
+                body: JSON.stringify({
+                    title: li.dataset.title,
+                    isDone: isDone,
+                    categoryId: li.dataset.categoryId ? Number(li.dataset.categoryId) : null
+                })
             });
 
             if (!response.ok) {

@@ -7,7 +7,10 @@
    js в браузере не может его вызвать когда задача добавляется через ajax,
    поэтому в js (taskToHtml в Tasks.cshtml) та же разметка продублирована строкой.
    это граница между серверным (razor) и клиентским (js) рендерингом - менять надо в ОБОИХ местах *@
-<li class="@(Model.IsDone ? "done" : "")">
+@* зан9 зад4: в data-* атрибутах название и категория задачи прям в разметке
+   PUT теперь хочет ВСЕ поля (UpdateTaskDto), чекбокс берет их отсюда
+   если CategoryId == null, data-category-id будет пустой *@
+<li class="@(Model.IsDone ? "done" : "")" data-title="@Model.Title" data-category-id="@Model.CategoryId">
     <input type="checkbox" checked="@Model.IsDone"
            onchange="toggleTask(@Model.Id, this)">
     <span class="task-title">#@Model.Id @Model.Title</span>
