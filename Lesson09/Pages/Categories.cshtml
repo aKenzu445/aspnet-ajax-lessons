@@ -1,0 +1,52 @@
+@page
+@model CategoriesModel
+@{
+    ViewData["Title"] = "Категории";
+}
+@* зан8 зад4: категории - своя таблица, поэтому новые добавляются прям со страницы, без правки кода и миграций *@
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+
+<section class="card">
+    <h2>Все категории</h2>
+    <table class="info-table">
+        <tr><td>№</td><td>Название</td><td>Задач</td><td></td></tr>
+        @foreach (var c in Model.AllCategories)
+        {
+            <tr>
+                <td>@c.Id</td>
+                <td>@c.Name</td>
+                <td>@c.Tasks.Count</td>
+                <td>
+                    @* зад11: удалить категорию (обработчик OnPostDelete) *@
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@c.Id" class="inline-form">
+                        <button type="submit">Удалить</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </table>
+</section>
+
+<section class="card">
+    <h2>Добавить категорию</h2>
+    <form method="post">
+        <div class="form-row">
+            <label asp-for="NewCategory.Name"></label>
+            <input asp-for="NewCategory.Name" placeholder="Например: Спорт" />
+            <button type="submit">Добавить</button>
+            <span asp-validation-for="NewCategory.Name" class="field-error"></span>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

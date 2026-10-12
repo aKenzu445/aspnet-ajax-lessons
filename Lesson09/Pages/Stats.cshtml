@@ -1,0 +1,41 @@
+@page
+@model StatsModel
+@* зан4 зад7: статистика теперь через модель с типами
+   было (зад6): логика тут + ViewBag.TotalCount (dynamic, компилятор не проверяет)
+   стало: логика в StatsModel.OnGet(), тут тока вывод Model.TotalCount
+   опечатка Model.TotlCount - ошибка компиляции CS1061, rider сразу красным
+   опечатка ViewBag.TotlCount - компилится, а на странице молча пусто (null) *@
+@{
+    ViewData["Title"] = "Статистика";
+}
+
+
+@* дз: сообщение после ручного обновления (показывается один раз) *@
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+
+<section class="card">
+    <table class="info-table">
+        <tr><td>Всего:</td><td>@Model.TotalCount</td></tr>
+        <tr><td>Выполнено:</td><td>@Model.DoneCount</td></tr>
+        <tr><td>Не выполнено:</td><td>@Model.UndoneCount</td></tr>
+    </table>
+
+    @* зан8 зад8: разбивка по категориям (GroupBy в StatsModel) *@
+    <h3>По категориям</h3>
+    <table class="info-table">
+        @foreach (var row in Model.ByCategory)
+        {
+            <tr><td>@row.CategoryName:</td><td>@row.Count</td></tr>
+        }
+        @* проверка: сумма по категориям должна совпасть с общим числом *@
+        <tr><td>Итого по категориям:</td><td>@Model.ByCategory.Sum(x => x.Count)</td></tr>
+    </table>
+
+    @* дз: обычная форма -> POST /Stats -> OnPost() -> редирект -> GET /Stats *@
+    <form method="post">
+        <button type="submit">Обновить статистику</button>
+    </form>
+</section>

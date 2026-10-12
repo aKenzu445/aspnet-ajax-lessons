@@ -1,0 +1,43 @@
+### Проверки занятия 8. Запусти проект занятия 8 (▶). Адрес: http://localhost:5109
+### Для проверки пагинации добавь 12+ задач (запрос ниже можно нажать несколько раз).
+
+@host = http://localhost:5109
+@key = lesson2-secret
+
+### Задача 5: задача с категорией (1 Работа, 2 Учёба, 3 Личное — из HasData)
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Курсовая работа", "categoryId": 2 }
+
+### Задача 5: несуществующая категория → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Проверка категории", "categoryId": 99 }
+
+### Задача 4: категории
+GET {{host}}/Categories
+
+### Задачи 6–7: фильтр по категории (названия категорий через Include)
+GET {{host}}/Tasks?categoryId=2
+
+### Задача 9: пагинация
+GET {{host}}/Tasks?pageNumber=2
+
+### Задача 9: несуществующая страница → 200, пустой список, без ошибки
+GET {{host}}/Tasks?pageNumber=99
+
+### Задача 10: всё вместе
+GET {{host}}/Tasks?categoryId=2&sortBy=title&pageNumber=2
+
+### ДЗ: поиск + фильтр + сортировка + страница
+GET {{host}}/Tasks?search=Курсовая&categoryId=2&sortBy=title&pageNumber=1
+
+### Задача 8: статистика по категориям
+GET {{host}}/Stats
+
+### API: фильтр по категории
+GET {{host}}/api/tasks?categoryId=2

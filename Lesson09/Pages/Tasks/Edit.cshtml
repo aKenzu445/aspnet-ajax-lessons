@@ -1,0 +1,88 @@
+@page "{id:int}"
+@model Lesson1.WebServer.Pages.Tasks.EditModel
+@* зан6 зад2: страница редактирования одной задачи
+   page "{id:int}" - id становится частью адреса: /Tasks/Edit/1, /Tasks/Edit/2 ...
+   (путь /Tasks/Edit из папки Pages/Tasks и файла Edit.cshtml)
+   :int - то же ограничение что в зан2: /Tasks/Edit/abc -> 404 *@
+@{
+    // RouteData.Values["id"] - id из адреса
+    ViewData["Title"] = $"Редактирование задачи №{RouteData.Values["id"]}";
+}
+
+@* зад4: форма редактирования на тег-хелперах
+   asp-for="Task.Title" сам делает name="Task.Title", id="Task_Title" и value="текущее значение"
+   если переименовать свойство а разметку забыть - не скомпилится (с обычным name="title" никто бы не заметил) *@
+<section class="card">
+    <form method="post">
+        @* зан7 зад9: сводка ВСЕХ ошибок формы, в том числе общих (ModelState.AddModelError("", ...)) которые не про одно поле *@
+        <div asp-validation-summary="All" class="validation-summary"></div>
+
+        @* скрытое поле с Id - так сервак на POST поймет КАКУЮ задачу редачить *@
+        <input type="hidden" asp-for="Task.Id" />
+
+        <div class="form-row">
+            @* label asp-for берет имя поля из [Display(Name = "Название")] в TaskItem *@
+            <label asp-for="Task.Title"></label>
+            <input asp-for="Task.Title" />
+            @* зад7: текст ошибки для поля Title *@
+            <span asp-validation-for="Task.Title" class="field-error"></span>
+        </div>
+
+        @* дз зан6 -> зан8 зад5: категория - выпадающий список из таблицы Categories
+           asp-for="Task.CategoryId" - выбранный Id попадет в Task.CategoryId (текущий будет выбран)
+           asp-items - варианты из EditModel.CategoryOptions. левый Id не сохранится - его отобьет внешний ключ в базе *@
+        <div class="form-row">
+            <label asp-for="Task.CategoryId"></label>
+            <select asp-for="Task.CategoryId" asp-items="Model.CategoryOptions">
+                <option value="">Без категории</option>
+            </select>
+        </div>
+
+        @* дз зан7: срок. из-за [DataType(DataType.Date)] asp-for делает <input type="date">, [MustBeFutureOrToday] проверяется на серваке *@
+        <div class="form-row">
+            <label asp-for="Task.DueDate"></label>
+            <input asp-for="Task.DueDate" />
+            <span asp-validation-for="Task.DueDate" class="field-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label>
+                @* для bool asp-for делает checkbox и ставит checked если IsDone == true *@
+                <input asp-for="Task.IsDone" type="checkbox" /> Выполнено
+            </label>
+        </div>
+
+        <button type="submit">Сохранить</button>
+        <a asp-page="/Tasks">Отмена</a>
+    </form>
+</section>
+
+@section Scripts {
+    @* зан7 зад2: валидация в браузере (unobtrusive) для формы редактирования *@
+    <partial name="_ValidationScriptsPartial" />
+
+    @* зан7 зад6: проверка слова "тест" руками (у [NoForbiddenWords] нет js адаптера) *@
+    <script src="~/js/title-checks.js"></script>
+    <script>
+        attachForbiddenWordsCheck(
+            document.getElementById("Task_Title").form,
+            document.getElementById("Task_Title"));
+
+        // зан7 зад9: то же правило на всю форму - сразу в браузере (для удобства), сервак всё равно проверит в OnPostAsync
+        document.getElementById("Task_Title").form.addEventListener("submit", (event) => {
+            const title = document.getElementById("Task_Title").value.trim();
+            const isDone = document.getElementById("Task_IsDone").checked;
+
+            if (isDone && title === "") {
+                event.preventDefault();
+                // после jquery.validate (он перерисовывает сводку), поэтому setTimeout 0
+                setTimeout(() => {
+                    const summary = document.querySelector("[data-valmsg-summary]");
+                    summary.className = "validation-summary validation-summary-errors";
+                    summary.querySelector("ul").insertAdjacentHTML("beforeend",
+                        "<li>Нельзя отметить выполненной задачу без названия</li>");
+                }, 0);
+            }
+        });
+    </script>
+}
