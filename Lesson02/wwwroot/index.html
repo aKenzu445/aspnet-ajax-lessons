@@ -55,6 +55,12 @@
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
+
+        <!-- зан2 зад4: найти задачу по id -->
+        <h3>Найти задачу по номеру</h3>
+        <input id="findTaskId" type="number" min="1" placeholder="id">
+        <button id="findTaskBtn">Найти задачу</button>
+        <div id="findTaskResult" class="result"></div>
     </section>
 </main>
 
@@ -221,6 +227,26 @@
         }
         await loadTasks();                        // перерисовать: выполненные зачеркнуты
     }
+
+    // === зан2 зад4: найти задачу по id ===
+    document.getElementById("findTaskBtn").addEventListener("click", async () => {
+        const id = document.getElementById("findTaskId").value;
+        const resultBlock = document.getElementById("findTaskResult");
+
+        const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
+
+        if (!response.ok) {
+            // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
+            const data = await response.json().catch(() => null);
+            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error ?? "Задача не найдена"}</span>`;
+            return;
+        }
+
+        const task = await response.json();
+        resultBlock.innerHTML =
+            `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
+            `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
+    });
 
     // при открытии сразу показываю инфу о серваке и задачи
     loadServerInfo();

@@ -103,6 +103,20 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 // GET /api/tasks -> массив задач в json
 app.MapGet("/api/tasks", () => TaskStorage.GetAll());
 
+// ===== Занятие 2, задача 4. Одна задача по id (параметр маршрута) =====
+// GET /api/tasks/1 → 200 + задача; GET /api/tasks/99 → 404
+app.MapGet("/api/tasks/{id}", (int id) =>
+{
+    TaskItem? task = TaskStorage.GetById(id);
+
+    if (task == null)
+    {
+        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+    }
+
+    return Results.Ok(task);                                                // 200
+});
+
 // === зад9: добавить задачу (POST) ===
 // POST /api/tasks с { "title": "Купить хлеб" } -> 201 и созданная задача
 app.MapPost("/api/tasks", (CreateTaskRequest request) =>
