@@ -1,6 +1,9 @@
 // занятие 3. razor и layout (продолжаю проект с зан1-2)
 using System.Diagnostics;          // Stopwatch - секундомер (зан2 зад3)
 using System.Globalization;
+using System.Text.Encodings.Web;   // TextEncoderSettings (кириллица в razor)
+using System.Text.Unicode;         // UnicodeRanges
+using Microsoft.Extensions.WebEncoders; // WebEncoderOptions
 using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
 using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
@@ -11,6 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 // === зан3 зад1: подключаю razor pages ===
 // AddRazorPages регает всё что нужно чтоб .cshtml превращались в html
 builder.Services.AddRazorPages();
+
+// razor по умолчанию превращает все не-латинские буквы в коды (И -> &#x418;)
+// в браузере норм, но в "просмотре кода" русский не прочитать. разрешаю выводить всё как есть
+// (защита от html-инъекций остается: < > & " всё равно экранируются)
+builder.Services.Configure<WebEncoderOptions>(options =>
+    options.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();

@@ -1,12 +1,28 @@
 @page
+@model TasksModel
 @* зан3 зад4: отдельная страница /Tasks - тока список задач
    разметку и js перенес с главной (зан1 зад8-10 и дз, зан2 зад4 и 7) *@
 
     <!-- зад8-10 + дз: список задач -->
     <section class="card">
         <h2>Задачи</h2>
-        <button id="loadTasksBtn">Показать задачи</button>
-        <ul id="taskList" class="task-list"></ul>
+        <button id="loadTasksBtn">Обновить список</button>
+
+        @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
+           Model.InitialTasks заполняется в TasksModel.OnGet() (Tasks.cshtml.cs)
+           razor сам экранирует task.Title, так что html в названии не сработает *@
+        <ul id="taskList" class="task-list">
+            @foreach (var task in Model.InitialTasks)
+            {
+                <li class="@(task.IsDone ? "done" : "")">
+                    @* checked="@true" Razor выводит как checked, а при false атрибут не выводит совсем *@
+                    <input type="checkbox" checked="@task.IsDone"
+                           onchange="toggleTask(@task.Id, this.checked)">
+                    <span class="task-title">#@task.Id @task.Title</span>
+                    <button onclick="deleteTask(@task.Id)">Удалить</button>
+                </li>
+            }
+        </ul>
 
         <!-- зад9: добавить задачу -->
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
@@ -148,6 +164,6 @@
     });
 
 
-    // При открытии страницы загружаем список задач
-    loadTasks();
+    // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
+    // ajax тока после добавления/удаления/галочки
 </script>
