@@ -14,6 +14,9 @@
    если переименовать свойство а разметку забыть - не скомпилится (с обычным name="title" никто бы не заметил) *@
 <section class="card">
     <form method="post">
+        @* зан7 зад9: сводка ВСЕХ ошибок формы, в том числе общих (ModelState.AddModelError("", ...)) которые не про одно поле *@
+        <div asp-validation-summary="All" class="validation-summary"></div>
+
         @* скрытое поле с Id - так сервак на POST поймет КАКУЮ задачу редачить *@
         <input type="hidden" asp-for="Task.Id" />
 
@@ -59,5 +62,22 @@
         attachForbiddenWordsCheck(
             document.getElementById("Task_Title").form,
             document.getElementById("Task_Title"));
+
+        // зан7 зад9: то же правило на всю форму - сразу в браузере (для удобства), сервак всё равно проверит в OnPostAsync
+        document.getElementById("Task_Title").form.addEventListener("submit", (event) => {
+            const title = document.getElementById("Task_Title").value.trim();
+            const isDone = document.getElementById("Task_IsDone").checked;
+
+            if (isDone && title === "") {
+                event.preventDefault();
+                // после jquery.validate (он перерисовывает сводку), поэтому setTimeout 0
+                setTimeout(() => {
+                    const summary = document.querySelector("[data-valmsg-summary]");
+                    summary.className = "validation-summary validation-summary-errors";
+                    summary.querySelector("ul").insertAdjacentHTML("beforeend",
+                        "<li>Нельзя отметить выполненной задачу без названия</li>");
+                }, 0);
+            }
+        });
     </script>
 }

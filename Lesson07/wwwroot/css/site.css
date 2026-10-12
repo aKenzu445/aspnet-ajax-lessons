@@ -259,3 +259,22 @@ input.input-validation-error {
     border-color: #c0392b;
     background: #fff6f5;
 }
+
+/* --- сводка ошибок формы (зан7 зад9) --- */
+.validation-summary-errors {
+    background: #fbe5e3;
+    color: #b0281b;
+    border: 1px solid #f2b8b2;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+}
+
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.validation-summary-valid {
+    display: none;
+}
