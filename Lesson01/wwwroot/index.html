@@ -26,6 +26,14 @@
         <button id="sumBtn">Посчитать</button>
         <div id="sumResult" class="result"></div>
     </section>
+
+    <!-- зад6: echo, кидаю json через POST -->
+    <section class="card">
+        <h2>Echo (POST)</h2>
+        <input id="echoText" type="text" placeholder="Введите текст">
+        <button id="echoBtn">Отправить</button>
+        <div id="echoResult" class="result"></div>
+    </section>
 </main>
 
 <script>
@@ -61,6 +69,25 @@
 
         const data = await response.json();
         resultBlock.innerHTML = `<span class="ok">${data.a} + ${data.b} = <b>${data.result}</b></span>`;
+    });
+
+    // === зад6 ===
+    // POST: данные в ТЕЛЕ запроса json-ом, а не в адресе как в зад5
+    // в headers говорю серверу что это json, JSON.stringify делает из объекта строку
+    document.getElementById("echoBtn").addEventListener("click", async () => {
+        const text = document.getElementById("echoText").value;
+
+        const response = await fetch("/api/echo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await response.json();
+
+        document.getElementById("echoResult").innerHTML =
+            `Исходный: ${data.original}<br>` +
+            `Верхний регистр: <b>${data.uppercase}</b><br>` +
+            `Длина: ${data.length}`;
     });
 </script>
 </body>

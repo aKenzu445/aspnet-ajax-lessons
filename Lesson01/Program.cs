@@ -38,5 +38,27 @@ app.MapGet("/api/sum", (double a, double b) => new
     Result = a + b
 });
 
+// === зад6: шлю данные на сервер через POST ===
+// POST /api/echo с телом { "text": "привет" }
+// EchoRequest (внизу файла) asp.net заполняет из тела запроса, а не из адреса как в зад5
+app.MapPost("/api/echo", (EchoRequest request) =>
+{
+    string text = request.Text ?? "";   // ?? - если Text не пришел (null), беру пустую строку
+
+    return new
+    {
+        Original = text,
+        Uppercase = text.ToUpper(),
+        Length = text.Length
+    };
+});
+
 // запуск сервака: начинает слушать порт и обрабатывать запросы
 app.Run();
+
+
+// === классы (типы данных) ===
+// в файле с top-level кодом классы пишутся ПОСЛЕ основного кода
+
+// зад6: тело POST /api/echo. string? - строка которая может быть null, record - короткий класс для данных
+public record EchoRequest(string? Text);
