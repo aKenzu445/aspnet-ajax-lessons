@@ -274,8 +274,8 @@ tasksApi.MapDelete("/{id:int}", async (int id, TaskDbContext db) =>
 });
 
 // --- PUT /api/tasks/{id} - галочка выполнено (дз зан1) ---
-// шлю { "isDone": true } -> 200 и задача
-// зан5: тоже теперь через базу, иначе после удаления старого хранилища сломалось бы
+// юзается чекбоксом на /Tasks (зан6 зад9), меняет тока IsDone, нет задачи -> 404
+// в зан5 тоже перевел на базу, а то после удаления старого хранилища всё бы сломалось
 tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskStatusRequest request, TaskDbContext db) =>
 {
     TaskItem? task = await db.Tasks.FindAsync(id);

@@ -133,7 +133,7 @@
         function taskToHtml(task) {
             return `<li class="${task.isDone ? "done" : ""}">
                         <input type="checkbox" ${task.isDone ? "checked" : ""}
-                               onchange="toggleTask(${task.id}, this.checked)">
+                               onchange="toggleTask(${task.id}, this)">
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
                         ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
                         <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
@@ -243,8 +243,12 @@
         }
 
         // === дз: чекбокс выполнено ===
-        // this.checked - стоит галка после клика или нет
-        async function toggleTask(id, isDone) {
+        // зан6 зад9: отмечаю одним кликом прям в списке, AJAX PUT без перезагрузки
+        // checkbox - это сама галка (в разметке передаю this)
+        async function toggleTask(id, checkbox) {
+            const isDone = checkbox.checked;
+            const li = checkbox.closest("li");     // строка где стоит галка
+
             const response = await fetch(`/api/tasks/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
@@ -252,10 +256,17 @@
             });
 
             if (!response.ok) {
-                const data = await response.json();
-                showTaskMessage(data.error, true);
+                // ошибка (типа 404 - задачу уже удалили): возвращаю галку назад
+                const data = await response.json().catch(() => null);
+                checkbox.checked = !isDone;
+                showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+                return;
             }
-            await loadTasks();                        // перерисовать: выполненные зачеркнуты
+
+            // ок: сразу меняю вид строки - класс "done" зачеркивает текст (site.css)
+            // classList.toggle(имя, условие) добавляет класс если true, иначе убирает
+            const task = await response.json();
+            li.classList.toggle("done", task.isDone);
         }
 
         // === зан2 зад4: найти задачу по id ===

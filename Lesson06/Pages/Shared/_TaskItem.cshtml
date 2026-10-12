@@ -9,7 +9,7 @@
    это граница между серверным (razor) и клиентским (js) рендерингом - менять надо в ОБОИХ местах *@
 <li class="@(Model.IsDone ? "done" : "")">
     <input type="checkbox" checked="@Model.IsDone"
-           onchange="toggleTask(@Model.Id, this.checked)">
+           onchange="toggleTask(@Model.Id, this)">
     <span class="task-title">#@Model.Id @Model.Title</span>
     @* дз зан5: категория (если есть) *@
     @if (Model.Category != null)
