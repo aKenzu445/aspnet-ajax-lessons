@@ -1,0 +1,25 @@
+### Проверки занятия 4. Запусти проект занятия 4 (▶). Адрес: http://localhost:5105
+### Формы (задачи 3–5, 9, ДЗ) удобнее проверять в браузере: им нужен анти-подделочный
+### токен, который Razor вставляет в каждую <form method="post">.
+
+@host = http://localhost:5105
+@key = lesson2-secret
+
+### Задача 1, 10: заголовок вкладки и описание (смотри <title> и page-description)
+GET {{host}}/Tasks
+
+### Задачи 6–7: статистика
+GET {{host}}/Stats
+
+### Подготовка для статистики: отметить задачу выполненной
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "isDone": true }
+
+### Задача 3 без токена → 400 (защита от подделки запросов работает)
+POST {{host}}/Tasks
+Content-Type: application/x-www-form-urlencoded
+
+title=Без токена

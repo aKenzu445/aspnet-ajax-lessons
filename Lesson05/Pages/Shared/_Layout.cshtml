@@ -1,0 +1,58 @@
+@* зан3 зад3: общий каркас (layout) для всех страниц
+   шапка, меню и футер написаны ОДИН раз тут, страница вставляется на место RenderBody() *@
+@{
+    // зад8: какая страница открыта щас
+    // ViewContext.RouteData.Values["page"] - путь страницы: "/Index", "/Tasks"...
+    // ?.ToString() - если null, не падаю
+    string? currentPage = ViewContext.RouteData.Values["page"]?.ToString();
+
+    // отдает "active" для пункта меню текущей страницы, иначе пусто
+    string ActiveClass(string page)
+    {
+        if (currentPage == page)
+        {
+            return "active";
+        }
+        return "";
+    }
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @* ViewData["Title"] - заголовок вкладки, каждая страница задает свой *@
+    <title>@ViewData["Title"] — Task Manager</title>
+    <link rel="stylesheet" href="~/css/site.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-title">Task Manager</div>
+        <nav class="site-nav">
+            <a href="/" class="@ActiveClass("/Index")">Главная</a>
+            <a href="/Tasks" class="@ActiveClass("/Tasks")">Задачи</a>
+            <a href="/Stats" class="@ActiveClass("/Stats")">Статистика</a>
+            <a href="/About" class="@ActiveClass("/About")">О сервере</a>
+        </nav>
+    </header>
+
+    <main>
+        @* зан4 зад10: общее правило для ВСЕХ страниц:
+           - ViewData["Title"] пишу в начале .cshtml
+           - ViewData["Description"] пишу в OnGet() PageModel
+           ?? "" - если описания нет (null), будет пусто, а не "null" *@
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-description">@(ViewData["Description"] ?? "")</p>
+
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        &copy; @DateTime.Now.Year Task Manager
+    </footer>
+
+    @* зад7: место для скриптов конкретной страницы (section Scripts)
+       required: false - страница может её и не задавать *@
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

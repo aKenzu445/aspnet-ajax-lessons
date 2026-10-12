@@ -1,0 +1,21 @@
+@model TaskItem
+@* зан3 зад6: partial view - кусок разметки который юзаю много раз:
+   ОДНА строка списка (чекбокс + текст + кнопки). принимает один TaskItem (model выше)
+   в Tasks.cshtml: <partial name="_TaskItem" model="task" />
+
+   ОГРАНИЧЕНИЕ: этот файл работает тока на СЕРВАКЕ когда собирается страница.
+   js в браузере не может его вызвать когда задача добавляется через ajax,
+   поэтому в js (taskToHtml в Tasks.cshtml) та же разметка продублирована строкой.
+   это граница между серверным (razor) и клиентским (js) рендерингом - менять надо в ОБОИХ местах *@
+<li class="@(Model.IsDone ? "done" : "")">
+    <input type="checkbox" checked="@Model.IsDone"
+           onchange="toggleTask(@Model.Id, this.checked)">
+    <span class="task-title">#@Model.Id @Model.Title</span>
+    <button onclick="deleteTask(@Model.Id)">Удалить</button>
+    @* зан4 зад5: обычная кнопка удаления (работает без js)
+       asp-page-handler="Delete" -> вызовется OnPostDelete, asp-route-id -> параметр id
+       тег-хелпер сделает action="/Tasks?id=3&handler=Delete" и добавит токен *@
+    <form method="post" asp-page="/Tasks" asp-page-handler="Delete" asp-route-id="@Model.Id" class="inline-form">
+        <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
+    </form>
+</li>
