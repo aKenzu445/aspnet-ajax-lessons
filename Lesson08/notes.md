@@ -56,3 +56,18 @@
 Добавить «Работа»   → 200, «Такая категория уже есть»
 Пустое название     → 200, «Название категории обязательно»
 ```
+
+## Задача 5. Привязка задачи к категории через выпадающий список
+
+- В `TasksModel` и `EditModel` свойство `SelectList CategoryOptions = new SelectList(await _db.Categories...ToListAsync(), "Id", "Name")`: у `<option>` value = Id, текст = Name.
+- В формах: `<select asp-for="NewTask.CategoryId" asp-items="Model.CategoryOptions">` и `<select asp-for="Task.CategoryId" asp-items="Model.CategoryOptions">` + пункт «Без категории» (`value=""` → `null`).
+- В задании предложен `ViewBag.Categories`. Выбрано **строго типизированное свойство** (разрешено заданием «или строго типизированное свойство»): по выводу занятия 4 компилятор проверяет имя и тип, а с ViewBag пришлось бы ещё и приводить тип (`(SelectList)ViewBag.Categories`).
+- AJAX-форма тоже выбирает категорию из `CategoryOptions` и отправляет `categoryId` числом.
+
+**Проверка в базе** (`sqlite3 tasks.db "SELECT Id, Title, CategoryId FROM Tasks"`):
+```
+Классическая форма, выбрана «Учёба»       → 1|Курсовая работа|2
+API {"categoryId":1}                      → 2|Отчёт для начальника|1
+Редактирование задачи 1: «Учёба» → «Личное» → 1|Курсовая работа|3
+API {"categoryId":99}                     → 400 {"errors":["Категория не найдена"]}
+```
