@@ -6,7 +6,12 @@ var builder = WebApplication.CreateBuilder(args);
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+// === зад4: статические файлы из wwwroot ===
+// UseDefaultFiles - на "/" отдает index.html
+// UseStaticFiles - отдает файлы из wwwroot как есть (html, css, js)
+// без него /index.html был бы 404, сервак про wwwroot не знал бы
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // === зад2: первый свой endpoint ===
 // GET /api/hello -> просто текст

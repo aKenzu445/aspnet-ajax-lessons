@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main>
+    <h1>Task Manager</h1>
+
+    <!-- зад4: первый ajax запрос -->
+    <section class="card">
+        <h2>Информация о сервере</h2>
+        <button id="serverInfoBtn">Получить информацию о сервере</button>
+        <div id="result" class="result"></div>
+    </section>
+</main>
+
+<script>
+    // === зад4 ===
+    // по клику делаю GET /api/server-info и кидаю ответ в #result
+    // страница не перезагружается, меняется тока блок
+    async function loadServerInfo() {
+        const response = await fetch("/api/server-info");
+        const info = await response.json();
+
+        document.getElementById("result").innerHTML =
+            `Сервер: <b>${info.serverName}</b><br>` +
+            `Версия: ${info.version}<br>` +
+            `Время на сервере: ${new Date(info.currentTime).toLocaleString("ru-RU")}`;
+    }
+
+    document.getElementById("serverInfoBtn").addEventListener("click", loadServerInfo);
+</script>
+</body>
+</html>
