@@ -1,0 +1,35 @@
+### Проверки занятия 5. Запусти проект занятия 5 (▶). Адрес: http://localhost:5106
+### Данные теперь в базе tasks.db — они сохраняются после перезапуска сервера.
+
+@host = http://localhost:5106
+@key = lesson2-secret
+
+### Задача 7: список из базы
+GET {{host}}/api/tasks
+
+### Задача 8: добавить в базу → 201 (Id выдаёт база, есть createdAt)
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Изучить EF Core" }
+
+### Задача 7: одна задача → 200 (или 404)
+GET {{host}}/api/tasks/1
+
+### Задача 9: удалить из базы → 200, повторно → 404
+DELETE {{host}}/api/tasks/1
+X-Api-Key: {{key}}
+
+### ДЗ: задача с категорией
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Отчёт", "category": "Работа" }
+
+### ДЗ: фильтр по категории
+GET {{host}}/api/tasks?category=Работа
+
+### Задача 10: статистика из базы
+GET {{host}}/Stats

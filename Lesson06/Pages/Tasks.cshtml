@@ -1,0 +1,281 @@
+@page
+@model TasksModel
+@{
+    // зан4 зад1: заголовок вкладки, layout выводит его в <title>
+    ViewData["Title"] = "Задачи";
+}
+@* зан3 зад4: отдельная страница /Tasks - тока список задач
+   разметку и js перенес с главной (зан1 зад8-10 и дз, зан2 зад4 и 7) *@
+
+@* зан4 зад10: h1 и описание теперь выводит общий _Layout (из ViewData["Title"] и ViewData["Description"]) *@
+
+@* зан4 зад4: сообщение после редиректа
+   чтение TempData["Message"] помечает его прочитанным - после запроса удалится, и на F5 его уже не будет (один раз) *@
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@* зан4 зад9: ошибка отдельным красным блоком (alert-error) *@
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
+@* зан4 зад8: эксперимент с TempData.Peek() - читает БЕЗ удаления:
+
+       var msg = TempData.Peek("Message");  ...  if (msg != null) { показать msg }
+
+   Peek НЕ помечает на удаление, поэтому сообщение остается и после F5.
+   проверил: оно вообще не пропадает (даже если уйти на /Stats и вернуться), пока кто-то не прочитает обычным TempData["Message"]
+   когда норм: надо "глянуть" значение не тратя его (проверить есть ли сообщение, а вывести в другом месте),
+   или пережить одно лишнее обновление - тогда вместе с TempData.Keep("Message")
+   когда плохо: для сообщений типа "задача добавлена" - юзер видит его на каждом F5 и думает что добавилась еще раз
+   поэтому в коде оставил обычное чтение TempData["Message"] (ровно один раз) *@
+@* зан4 зад2 (было): тут выводил ViewBag.PageDescription - читал через ViewBag то что записал через ViewData в OnGet()
+   сработало потому что ViewBag и ViewData это один и тот же словарь. с зад10 описание выводит _Layout *@
+
+    <!-- зад8-10 + дз: список задач -->
+    <section class="card">
+        <h2>Список</h2>
+        @* дз зан5: фильтр по категории
+           method="get" - выбор попадает в адрес /Tasks?category=Работа и прилетает в OnGetAsync(string? category) *@
+        <form method="get" class="filter-form">
+            <label for="categoryFilter">Категория:</label>
+            <select id="categoryFilter" name="category">
+                <option value="">Все задачи</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c" selected="@(c == Model.SelectedCategory)">@c</option>
+                }
+            </select>
+            <button type="submit">Применить</button>
+        </form>
+
+        @* подсказки для поля Категория в формах добавления *@
+        <datalist id="categoryOptions">
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c"></option>
+            }
+        </datalist>
+
+        <button id="loadTasksBtn">Обновить список</button>
+
+        @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
+           Model.InitialTasks заполняется в TasksModel.OnGet() (Tasks.cshtml.cs)
+           razor сам экранирует task.Title, так что html в названии не сработает *@
+        @* зад10: если задач нет - норм сообщение вместо пустого <ul></ul>
+           пустой список (скрыт через hidden) всё равно вывожу: js закинет туда первую задачу и спрячет сообщение без перезагрузки *@
+        @if (Model.InitialTasks.Count == 0)
+        {
+            <p id="emptyMessage" class="empty-message">Задач пока нет, добавьте первую!</p>
+            <ul id="taskList" class="task-list" hidden></ul>
+        }
+        else
+        {
+            <p id="emptyMessage" class="empty-message" hidden>Задач пока нет, добавьте первую!</p>
+            <ul id="taskList" class="task-list">
+                @foreach (var task in Model.InitialTasks)
+                {
+                    @* зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
+                    <partial name="_TaskItem" model="task" />
+                }
+            </ul>
+        }
+
+        <!-- зад9: добавить через ajax (без перезагрузки) -->
+        <h3>Добавить задачу (AJAX)</h3>
+        <input id="newTaskTitle" type="text" placeholder="Новая задача">
+        <input id="newTaskCategory" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
+        <button id="addTaskBtn">Добавить задачу</button>
+        <div id="taskMessage"></div>
+
+        @* зан4 зад3: обычная html форма, работает даже без js
+           method="post" -> браузер шлет POST на этот же адрес (/Tasks) -> срабатывает OnPost
+           страница ПОЛНОСТЬЮ перезагружается (редирект), в отличие от ajax формы выше
+           тег-хелпер form сам добавляет скрытый __RequestVerificationToken (защита от CSRF) *@
+        <h3>Добавить задачу (обычная форма)</h3>
+        <form method="post">
+            <input name="title" type="text" placeholder="Новая задача">
+            <input name="category" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
+            <button type="submit">Добавить (с перезагрузкой)</button>
+        </form>
+
+        <!-- зан2 зад4: найти задачу по id -->
+        <h3>Найти задачу по номеру</h3>
+        <input id="findTaskId" type="number" min="1" placeholder="id">
+        <button id="findTaskBtn">Найти задачу</button>
+        <div id="findTaskResult" class="result"></div>
+    </section>
+
+@* зад7: скрипт для списка задач - в section Scripts
+   layout выводит её в RenderSection("Scripts"), поэтому этот js попадает ТОКА на эту страницу *@
+@section Scripts {
+    <script>
+        // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
+        const API_KEY = "lesson2-secret";
+
+        // === зад8: грузим список задач ===
+
+        // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // разметка одной строки списка
+        // зан3 зад6: ТА ЖЕ разметка что в partial Pages/Shared/_TaskItem.cshtml
+        // partial работает на серваке и js не может его вызвать при добавлении через ajax,
+        // поэтому тут собираю строку руками (клиентский рендеринг)
+        function taskToHtml(task) {
+            return `<li class="${task.isDone ? "done" : ""}">
+                        <input type="checkbox" ${task.isDone ? "checked" : ""}
+                               onchange="toggleTask(${task.id}, this.checked)">
+                        <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
+                        ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
+                        <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
+                        <button onclick="deleteTask(${task.id})">Удалить</button>
+                        <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
+                            <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryToken()}">
+                            <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
+                        </form>
+                    </li>`;
+        }
+
+        // зан5 зад11: дата создания как в partial _TaskItem.cshtml
+        // у задач созданных до миграции AddCreatedAt сервак отдает "0001-01-01T00:00:00"
+        function formatCreatedAt(createdAt) {
+            if (!createdAt || createdAt.startsWith("0001-01-01")) {
+                return "дата неизвестна";
+            }
+            const d = new Date(createdAt);
+            const pad = n => String(n).padStart(2, "0");   // 5 -> "05"
+            return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        // зан4 зад5: для обычной формы удаления в строке которую нарисовал js нужен токен защиты
+        // беру его из любой формы которую сгенерил razor
+        function antiforgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]').value;
+        }
+
+        async function loadTasks() {
+            // дз зан5: учитываю фильтр (?category=... в адресе), чтоб после ajax он не слетал
+            const category = new URLSearchParams(location.search).get("category");
+            const url = category ? `/api/tasks?category=${encodeURIComponent(category)}` : "/api/tasks";
+            const response = await fetch(url);
+
+            // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+                return;
+            }
+
+            const tasks = await response.json();          // массив задач
+
+            const list = document.getElementById("taskList");
+            list.innerHTML = "";
+            for (const task of tasks) {
+                list.innerHTML += taskToHtml(task);
+            }
+
+            // зад10: "задач пока нет" показываю тока когда список пустой. hidden = true прячет, false показывает
+            const isEmpty = tasks.length === 0;
+            document.getElementById("emptyMessage").hidden = !isEmpty;
+            list.hidden = isEmpty;
+        }
+
+        document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
+
+        // сообщение под списком (ошибка красным)
+        function showTaskMessage(text, isError) {
+            document.getElementById("taskMessage").innerHTML =
+                text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
+        }
+
+        // === зад9: добавить задачу ===
+        // после POST заново тяну весь список. почему: правда тока на сервере,
+        // так на экране точно то что сохранено (с норм Id) + видно чужие задачи
+        // минус - лишний запрос, но для мелкого списка пофиг
+        document.getElementById("addTaskBtn").addEventListener("click", async () => {
+            const input = document.getElementById("newTaskTitle");
+
+            const response = await fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                body: JSON.stringify({
+                    title: input.value,
+                    category: document.getElementById("newTaskCategory").value   // дз зан5
+                })
+            });
+            const data = await response.json();
+
+            if (!response.ok) {                       // 400 - пустое название
+                showTaskMessage(data.error, true);
+                return;
+            }
+
+            input.value = "";
+            showTaskMessage(`Задача №${data.id} добавлена`, false);
+            await loadTasks();                        // обновляю список без перезагрузки
+        });
+
+        // === зад10: удаление ===
+        // вызывается кнопкой Удалить (onclick в строке)
+        async function deleteTask(id) {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: "DELETE",
+                headers: { "X-Api-Key": API_KEY }
+            });
+            const data = await response.json();
+
+            if (!response.ok) {                       // 404 - задачи уже нет
+                showTaskMessage(data.error, true);
+            } else {
+                showTaskMessage(data.message, false);
+            }
+            await loadTasks();
+        }
+
+        // === дз: чекбокс выполнено ===
+        // this.checked - стоит галка после клика или нет
+        async function toggleTask(id, isDone) {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                body: JSON.stringify({ isDone: isDone })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                showTaskMessage(data.error, true);
+            }
+            await loadTasks();                        // перерисовать: выполненные зачеркнуты
+        }
+
+        // === зан2 зад4: найти задачу по id ===
+        document.getElementById("findTaskBtn").addEventListener("click", async () => {
+            const id = document.getElementById("findTaskId").value;
+            const resultBlock = document.getElementById("findTaskResult");
+
+            const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
+
+            if (!response.ok) {
+                // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
+                const data = await response.json().catch(() => null);
+                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error ?? "Задача не найдена"}</span>`;
+                return;
+            }
+
+            const task = await response.json();
+            resultBlock.innerHTML =
+                `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
+                `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
+        });
+
+
+        // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
+        // ajax тока после добавления/удаления/галочки
+    </script>
+}
