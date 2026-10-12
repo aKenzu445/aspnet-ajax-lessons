@@ -125,3 +125,23 @@ ul.task-list li.done .task-title {
     text-decoration: line-through;
     color: #888;
 }
+
+/* --- страница ошибки (зан3 зад9) --- */
+.error-page {
+    text-align: center;
+}
+
+.muted {
+    color: #888;
+    font-size: 13px;
+}
+
+a.button {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 16px;
+    background: #2457a6;
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+}

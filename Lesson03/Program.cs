@@ -24,16 +24,21 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
-// === зан2 зад8: глобальная обработка ошибок ===
-// стоит ПЕРВЫМ и оборачивает всё в try/catch
-// если где-то дальше вылетит исключение - клиент получит норм json 500, а не страницу с кучей стека
+// === зан3 зад9: ошибки для обычных страниц сайта ===
+// стоит первым. если страница упала - запрос перекидывается на /Error и юзер видит Pages/Error.cshtml
+app.UseExceptionHandler("/Error");
+
+// === зан2 зад8: ловлю ошибки для api ===
+// оборачиваю всё что дальше в try/catch, вылетело исключение -> норм json 500 вместо страшной страницы
+// зан3 зад9: ловлю ТОКА /api/... - "when" пропускает остальное наверх в UseExceptionHandler,
+// он покажет html страницу. итого у api и у сайта разная обработка ошибок и обе работают
 app.Use(async (context, next) =>
 {
     try
     {
         await next();
     }
-    catch (Exception ex)
+    catch (Exception ex) when (context.Request.Path.StartsWithSegments("/api"))
     {
         // полная инфа об ошибке - тока в консоль сервака, для меня
         Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ОШИБКА при {context.Request.Method} {context.Request.Path}:");
