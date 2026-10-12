@@ -21,5 +21,7 @@ public class AboutModel : PageModel
         StartedAt = ServerInfo.StartedAt;
         CurrentTime = DateTime.Now;
         Uptime = CurrentTime - StartedAt;     // разница двух дат - это TimeSpan
+
+        ViewData["Description"] = "Имя, версия и время работы сервера (страница без AJAX)";   // зан4 зад10
     }
 }

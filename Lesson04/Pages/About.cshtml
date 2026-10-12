@@ -1,9 +1,11 @@
 @page
 @model AboutModel
+@{
+    ViewData["Title"] = "О сервере";   // зан4 зад10
+}
 @* дз зан3: инфа о серваке без единого ajax - всё подставил razor из AboutModel (заполняется в OnGet) *@
 
 <section class="card">
-    <h2>О сервере</h2>
     <table class="info-table">
         <tr><td>Имя сервера:</td><td>@Model.ServerName</td></tr>
         <tr><td>Версия:</td><td>@Model.Version</td></tr>

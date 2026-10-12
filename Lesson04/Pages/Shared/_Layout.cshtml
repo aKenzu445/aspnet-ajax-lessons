@@ -37,6 +37,13 @@
     </header>
 
     <main>
+        @* зан4 зад10: общее правило для ВСЕХ страниц:
+           - ViewData["Title"] пишу в начале .cshtml
+           - ViewData["Description"] пишу в OnGet() PageModel
+           ?? "" - если описания нет (null), будет пусто, а не "null" *@
+        <h1 class="page-title">@ViewData["Title"]</h1>
+        <p class="page-description">@(ViewData["Description"] ?? "")</p>
+
         @RenderBody()
     </main>
 

@@ -20,5 +20,8 @@ public class StatsModel : PageModel
         TotalCount = tasks.Count;
         DoneCount = tasks.Count(t => t.IsDone);       // LINQ: сколько штук где IsDone == true
         UndoneCount = tasks.Count(t => !t.IsDone);
+
+        // зад10: описание страницы - по общему правилу в OnGet()
+        ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
     }
 }

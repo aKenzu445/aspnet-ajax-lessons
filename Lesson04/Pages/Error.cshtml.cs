@@ -17,5 +17,6 @@ public class ErrorModel : PageModel
     public void OnGet()
     {
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        ViewData["Description"] = "Не удалось обработать запрос";   // зан4 зад10
     }
 }

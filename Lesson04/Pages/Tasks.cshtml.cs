@@ -19,12 +19,11 @@ public class TasksModel : PageModel
         // то же хранилище в памяти что у GET /api/tasks
         InitialTasks = TaskStorage.GetAll();
 
-        // Занятие 4, задача 2. Записываем описание через ViewData (словарь: ключ → значение).
-        // В Tasks.cshtml оно читается через ViewBag.PageDescription — и это работает,
-        // потому что ViewBag — не отдельное хранилище, а "динамическая обёртка" над тем же
-        // словарём ViewData: ViewBag.PageDescription == ViewData["PageDescription"].
-        // Разница только в синтаксисе доступа.
-        ViewData["PageDescription"] = "Здесь вы можете управлять своими задачами";
+        // зан4 зад2: описание пишу через ViewData (словарь ключ -> значение)
+        // его можно читать и как ViewBag.Description - ViewBag это не отдельная штука,
+        // а dynamic обертка над тем же ViewData, разница тока в синтаксисе
+        // зад10: по общему правилу ключ "Description", выводится в _Layout
+        ViewData["Description"] = "Здесь вы можете управлять своими задачами";
     }
 
     // === зан4 зад3: обработчик обычной формы добавления ===
