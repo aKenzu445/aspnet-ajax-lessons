@@ -100,6 +100,20 @@ app.MapPost("/api/tasks", (CreateTaskRequest request) =>
     return Results.Json(created, statusCode: StatusCodes.Status201Created);
 });
 
+// === зад10: удаление (DELETE) ===
+// /api/tasks/2 - {id} это часть адреса, не query string. "2" само превращается в int
+app.MapDelete("/api/tasks/{id}", (int id) =>
+{
+    bool deleted = TaskStorage.Delete(id);
+
+    if (!deleted)
+    {
+        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+    }
+
+    return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
+});
+
 // запуск сервака: начинает слушать порт и обрабатывать запросы
 app.Run();
 

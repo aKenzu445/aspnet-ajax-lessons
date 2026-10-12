@@ -143,6 +143,7 @@
     function taskToHtml(task) {
         return `<li class="${task.isDone ? "done" : ""}">
                     <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
+                    <button onclick="deleteTask(${task.id})">Удалить</button>
                 </li>`;
     }
 
@@ -188,6 +189,20 @@
         showTaskMessage(`Задача №${data.id} добавлена`, false);
         await loadTasks();                        // обновляю список без перезагрузки
     });
+
+    // === зад10: удаление ===
+    // вызывается кнопкой Удалить (onclick в строке)
+    async function deleteTask(id) {
+        const response = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+        const data = await response.json();
+
+        if (!response.ok) {                       // 404 - задачи уже нет
+            showTaskMessage(data.error, true);
+        } else {
+            showTaskMessage(data.message, false);
+        }
+        await loadTasks();
+    }
 
     // при открытии сразу показываю инфу о серваке и задачи
     loadServerInfo();
