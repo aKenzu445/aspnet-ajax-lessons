@@ -134,3 +134,17 @@ GET /api/tasks/6 (адрес из Location) → 200 та же задача
 DELETE /api/tasks/6 → HTTP/1.1 204 No Content
 ```
 В Rider HTTP Client заголовки ответа видны в панели результата (аналог вкладки Headers в Postman).
+
+## Задача 8. Фильтрация, сортировка и пагинация в API
+
+`GET /api/tasks?categoryId=&search=&sortBy=&page=&pageSize=`. Тот же LINQ, что на странице `/Tasks` (занятие 8): `Include → Where (категория, поиск) → CountAsync → OrderBy/ThenBy → Skip/Take`. Защита от бессмысленных значений: `page ≥ 1`, `pageSize` в диапазоне 1..50 (`Math.Clamp`), по умолчанию 10.
+
+Ответ — «конверт» `Dtos/PagedResultDto.cs` (`record PagedResultDto<T>(Items, Page, PageSize, TotalCount, TotalPages)`; `<T>` — обобщённый тип, подойдёт для любых элементов):
+```json
+GET /api/tasks?categoryId=2&sortBy=title&page=2&pageSize=5 → 200
+{ "items": [ "Учебная задача 4", ... "Учебная задача 8" (TaskDto) ],
+  "page": 2, "pageSize": 5, "totalCount": 11, "totalPages": 3 }
+```
+Проверено: вторая страница отфильтрованных («Учёба») и отсортированных по названию задач, `totalPages = ceil(11 / 5) = 3`. `?page=99` → `items: []` без ошибки. Без параметров: `page 1, pageSize 10`.
+
+Примечание: в Minimal API параметр **может** называться `page`. Конфликт со служебным значением маршрута `page` есть только у Razor Pages (занятие 8, задача 9).

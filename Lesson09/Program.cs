@@ -212,26 +212,46 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 var tasksApi = app.MapGroup("/api/tasks");
 
 // --- GET /api/tasks - список (зан1 зад8) ---
-// зан5 зад7: теперь читаю из базы через EF, а не из списка в памяти
-// db (TaskDbContext) asp.net сам подсовывает, я его в Program.cs зарегал
-// async/await чтоб сервак не тупил пока база отвечает, ToListAsync - выполнить и получить список
-// зан8: категория теперь своя таблица, фильтр по номеру ?categoryId=2
-tasksApi.MapGet("/", async (int? categoryId, TaskDbContext db) =>
+// с зан5 берется из базы, db подставляется само. в зан8 фильтр по категории
+// зан9 зад8: еще поиск, сортировка и страницы, как на /Tasks: Where -> OrderBy -> Skip/Take
+// пример: /api/tasks?categoryId=2&search=отчёт&sortBy=title&page=2&pageSize=5
+// отдаю "конверт" { items, page, pageSize, totalCount, totalPages }
+// (тут page можно, это не razor pages, там page занят)
+tasksApi.MapGet("/", async (int? categoryId, string? search, string? sortBy, int? page, int? pageSize, TaskDbContext db) =>
 {
-    // IQueryable — запрос, который ещё НЕ выполнен; к нему можно добавлять условия
-    // Занятие 9, задача 1: заказчик хочет видеть категорию и в API — добавляем Include,
-    // но по-прежнему возвращаем сущности TaskItem напрямую.
+    // значения по умолчанию + защита от фигни (страница 0, 1000 задач за раз)
+    int currentPage = Math.Max(page ?? 1, 1);
+    int size = Math.Clamp(pageSize ?? 10, 1, 50);   // Clamp - зажать в 1..50
+
+    // Include для categoryName в DTO, IQueryable - запрос еще не выполнен
     IQueryable<TaskItem> query = db.Tasks.Include(t => t.Category);
 
-    if (categoryId.HasValue)   // HasValue - у int? есть значение (не null)
+    if (categoryId.HasValue)
     {
-        query = query.Where(t => t.CategoryId == categoryId);   // LINQ Where -> SQL WHERE
+        query = query.Where(t => t.CategoryId == categoryId);
+    }
+    if (!string.IsNullOrWhiteSpace(search))           // поиск (дз зан8, живой поиск зад10)
+    {
+        string text = search.Trim();
+        query = query.Where(t => t.Title.Contains(text));
     }
 
-    List<TaskItem> tasks = await query.ToListAsync();   // тока тут запрос реально уходит в базу
+    int totalCount = await query.CountAsync();                         // до Skip/Take
+    int totalPages = (int)Math.Ceiling(totalCount / (double)size);
 
-    // Занятие 9, задача 2: наружу отдаём не сущности, а DTO — без навигационных свойств
-    return tasks.Select(TaskDto.FromEntity).ToList();
+    IOrderedQueryable<TaskItem> sorted = sortBy == "title"
+        ? query.OrderBy(t => t.Title)
+        : query.OrderByDescending(t => t.CreatedAt);
+
+    List<TaskItem> tasks = await sorted
+        .ThenBy(t => t.Id)
+        .Skip((currentPage - 1) * size)
+        .Take(size)
+        .ToListAsync();
+
+    // зан9 зад2: наружу DTO, зад8: в "конверте" с инфой о страницах
+    var items = tasks.Select(TaskDto.FromEntity).ToList();
+    return new PagedResultDto<TaskDto>(items, currentPage, size, totalCount, totalPages);
 });
 
 // --- GET /api/tasks/{id} - одна задача (зан2 зад4-5) ---
