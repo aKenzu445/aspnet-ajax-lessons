@@ -2,6 +2,7 @@ using Lesson1.WebServer.Data;
 using Lesson1.WebServer.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;   // SelectList - варианты для <select>
 
 namespace Lesson1.WebServer.Pages.Tasks;
 
@@ -20,6 +21,9 @@ public class EditModel : PageModel
     // и заполнит объект. никаких Request.Form["..."] руками
     [BindProperty]
     public TaskItem Task { get; set; } = new();
+
+    // дз зан6: варианты для выпадающего списка категорий (из заранее заданного списка)
+    public SelectList CategoryOptions { get; } = new(TaskCategories.All);
 
     // GET /Tasks/Edit/5 -> id = 5 (из маршрута {id:int})
     public async Task<IActionResult> OnGetAsync(int id)
@@ -75,6 +79,8 @@ public class EditModel : PageModel
         // переношу новые значения из формы в объект из базы
         existing.Title = Task.Title;
         existing.IsDone = Task.IsDone;
+        // дз: категория из списка, "Без категории" (пусто) -> null
+        existing.Category = string.IsNullOrWhiteSpace(Task.Category) ? null : Task.Category;
 
         await _db.SaveChangesAsync();   // EF сделает UPDATE тока измененных столбцов
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;   // атрибуты [Display], [Required] и тд (зан6)
+using Lesson1.WebServer.Validation;           // мой атрибут [AllowedCategory] (дз зан6)
 
 namespace Lesson1.WebServer.Models;
 
@@ -22,7 +23,9 @@ public class TaskItem
     // зан5 зад11: дата и время создания (новый столбец -> миграция AddCreatedAt)
     public DateTime CreatedAt { get; set; }
 
-    // дз зан5: категория задачи, необязательная
-    // string? - может быть null, в базе столбец тоже допускает NULL
+    // дз зан5: категория задачи, необязательная (string?, может быть null)
+    // дз зан6: можно тока категории из TaskCategories.All - проверяет мой атрибут [AllowedCategory] (папка Validation)
+    [Display(Name = "Категория")]
+    [AllowedCategory]
     public string? Category { get; set; }
 }

@@ -25,6 +25,18 @@
             <span asp-validation-for="Task.Title" class="field-error"></span>
         </div>
 
+        @* дз зан6: категория - выпадающий список
+           asp-for="Task.Category" - привязка к свойству (и выбор текущего)
+           asp-items - варианты из EditModel.CategoryOptions (заранее заданный список)
+           на серваке проверяет мой атрибут [AllowedCategory] *@
+        <div class="form-row">
+            <label asp-for="Task.Category"></label>
+            <select asp-for="Task.Category" asp-items="Model.CategoryOptions">
+                <option value="">Без категории</option>
+            </select>
+            <span asp-validation-for="Task.Category" class="field-error"></span>
+        </div>
+
         <div class="form-row">
             <label>
                 @* для bool asp-for делает checkbox и ставит checked если IsDone == true *@

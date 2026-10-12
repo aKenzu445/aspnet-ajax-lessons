@@ -50,14 +50,6 @@
             <button type="submit">Применить</button>
         </form>
 
-        @* подсказки для поля Категория в формах добавления *@
-        <datalist id="categoryOptions">
-            @foreach (var c in Model.Categories)
-            {
-                <option value="@c"></option>
-            }
-        </datalist>
-
         <button id="loadTasksBtn">Обновить список</button>
 
         @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
@@ -85,7 +77,13 @@
         <!-- зад9: добавить через ajax (без перезагрузки) -->
         <h3>Добавить задачу (AJAX)</h3>
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
-        <input id="newTaskCategory" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
+        <select id="newTaskCategory">
+            <option value="">Без категории</option>
+            @foreach (var c in TaskCategories.All)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
 
@@ -98,7 +96,10 @@
            ошибка (asp-validation-for) показывается так же как на странице редактирования *@
         <form method="post">
             <input asp-for="NewTask.Title" placeholder="Новая задача" />
-            <input asp-for="NewTask.Category" placeholder="Категория (необязательно)" list="categoryOptions" />
+            @* дз зан6: категория из того же списка что на странице редактирования *@
+            <select asp-for="NewTask.Category" asp-items="new SelectList(TaskCategories.All)">
+                <option value="">Без категории</option>
+            </select>
             <button type="submit">Добавить (с перезагрузкой)</button>
             <div><span asp-validation-for="NewTask.Title" class="field-error"></span></div>
         </form>
