@@ -105,7 +105,11 @@ app.MapGet("/api/tasks", () => TaskStorage.GetAll());
 
 // ===== Занятие 2, задача 4. Одна задача по id (параметр маршрута) =====
 // GET /api/tasks/1 → 200 + задача; GET /api/tasks/99 → 404
-app.MapGet("/api/tasks/{id}", (int id) =>
+// Задача 5: {id:int} — ограничение маршрута (route constraint). Маршрут подходит,
+// ТОЛЬКО если id — целое число. /api/tasks/abc → 404 ещё до запуска нашего кода.
+// (Без :int запрос /api/tasks/abc давал 400 с исключением BadHttpRequestException.)
+// Это же ограничение добавлено к DELETE и PUT ниже.
+app.MapGet("/api/tasks/{id:int}", (int id) =>
 {
     TaskItem? task = TaskStorage.GetById(id);
 
@@ -135,7 +139,7 @@ app.MapPost("/api/tasks", (CreateTaskRequest request) =>
 
 // === зад10: удаление (DELETE) ===
 // /api/tasks/2 - {id} это часть адреса, не query string. "2" само превращается в int
-app.MapDelete("/api/tasks/{id}", (int id) =>
+app.MapDelete("/api/tasks/{id:int}", (int id) =>
 {
     bool deleted = TaskStorage.Delete(id);
 
@@ -150,7 +154,7 @@ app.MapDelete("/api/tasks/{id}", (int id) =>
 // === дз: отметить задачу выполненной (PUT) ===
 // PUT /api/tasks/2 с { "isDone": true } -> 200 и задача
 // PUT это когда обновляешь то что уже есть
-app.MapPut("/api/tasks/{id}", (int id, UpdateTaskStatusRequest request) =>
+app.MapPut("/api/tasks/{id:int}", (int id, UpdateTaskStatusRequest request) =>
 {
     TaskItem? task = TaskStorage.GetById(id);
 
