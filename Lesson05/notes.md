@@ -36,3 +36,15 @@ Entity Framework Core .NET Command-line Tools
 10.0.11
 ```
 Пакеты записаны в `Lesson1.WebServer.csproj` (`<PackageReference ... />`).
+
+## Задача 4. Строка подключения и регистрация DbContext в DI
+
+- `appsettings.json` → `"ConnectionStrings": { "TaskDb": "Data Source=tasks.db" }`. **Строка подключения** описывает, где база и как к ней подключиться. Для SQLite это просто путь к файлу.
+- `Program.cs`:
+  ```csharp
+  builder.Services.AddDbContext<TaskDbContext>(options =>
+      options.UseSqlite(builder.Configuration.GetConnectionString("TaskDb")));
+  ```
+  Это регистрация в контейнере **внедрения зависимостей (DI)**. Теперь, если endpoint или PageModel попросит `TaskDbContext` (параметром или в конструкторе), ASP.NET Core сам его создаст и передаст.
+
+**Проверка:** сервер запускается без исключений. Файла `tasks.db` ещё **нет** (`ls tasks.db` → No such file or directory): регистрация только *описывает*, как подключаться, но саму базу не создаёт.

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Encodings.Web;   // TextEncoderSettings (кириллица в razor)
 using System.Text.Unicode;         // UnicodeRanges
 using Microsoft.Extensions.WebEncoders; // WebEncoderOptions
+using Microsoft.EntityFrameworkCore;   // UseSqlite, ToListAsync и тд (зан5)
 using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
 using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
@@ -14,6 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 // === зан3 зад1: подключаю razor pages ===
 // AddRazorPages регает всё что нужно чтоб .cshtml превращались в html
 builder.Services.AddRazorPages();
+
+// === зан5 зад4: регаю DbContext в DI ===
+// AddDbContext - asp.net сам создает TaskDbContext на каждый запрос и отдает куда надо (endpoint или PageModel)
+// UseSqlite - какая бд, строка подключения из appsettings.json -> ConnectionStrings:TaskDb
+builder.Services.AddDbContext<TaskDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("TaskDb")));
 
 // razor по умолчанию превращает все не-латинские буквы в коды (И -> &#x418;)
 // в браузере норм, но в "просмотре кода" русский не прочитать. разрешаю выводить всё как есть
