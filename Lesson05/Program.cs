@@ -213,7 +213,7 @@ tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 
 // --- POST /api/tasks - добавить (зан1 зад9) ---
 // шлю { "title": "Купить хлеб" } -> 201 и созданная задача
-tasksApi.MapPost("/", (CreateTaskRequest request) =>
+tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
 {
     // IsNullOrWhiteSpace - true если null, "" или одни пробелы
     if (string.IsNullOrWhiteSpace(request.Title))
@@ -221,7 +221,10 @@ tasksApi.MapPost("/", (CreateTaskRequest request) =>
         return Results.BadRequest(new { Error = "Название задачи не может быть пустым" }); // 400
     }
 
-    TaskItem created = TaskStorage.Add(request.Title.Trim());   // Trim - убрать пробелы по краям
+    // зан5 зад8: создаю БЕЗ Id - база сама даст следующий номер
+    var created = new TaskItem { Title = request.Title.Trim(), IsDone = false };   // Trim - убрать пробелы по краям
+    db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
+    await db.SaveChangesAsync();     // делаю INSERT в базе, после этого у created уже есть Id
 
     // 201 Created - создано, в ответе сама задача уже с Id
     return Results.Json(created, statusCode: StatusCodes.Status201Created);

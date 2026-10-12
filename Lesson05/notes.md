@@ -115,3 +115,18 @@ GET /api/tasks   → 200 []                                  (пустой ма�
 GET /api/tasks/1 → 404 {"error":"Задача не найдена"}
 ```
 **Почему список пуст:** endpoints теперь читают **другой источник** — таблицу `Tasks` в файле `tasks.db`, а она пока пустая (задача 6). Три «стартовые» задачи живут в старом `TaskStorage` в памяти, и Razor-страница `/Tasks` пока показывает их. Два источника данных временно **рассинхронизированы**, это исправит задача 10.
+
+## Задача 8. POST пишет в базу
+
+```csharp
+var created = new TaskItem { Title = request.Title.Trim(), IsDone = false }; // Id не задаём
+db.Tasks.Add(created);          // объект помечен как новый (Added), в базе его ещё нет
+await db.SaveChangesAsync();    // EF выполняет INSERT; база генерирует Id и EF записывает его в created.Id
+```
+**Проверка:**
+```
+POST /api/tasks {"title":"Изучить EF Core"} → 201 {"id":1,"title":"Изучить EF Core","isDone":false}
+GET  /api/tasks/1                           → 200 (раньше было 404)
+sqlite3 tasks.db "SELECT * FROM Tasks;"     → 1|Изучить EF Core|0
+```
+Данные реально лежат в файле базы.
