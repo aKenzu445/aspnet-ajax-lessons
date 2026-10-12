@@ -11,6 +11,33 @@ var builder = WebApplication.CreateBuilder(args);
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
+// === зан2 зад8: глобальная обработка ошибок ===
+// стоит ПЕРВЫМ и оборачивает всё в try/catch
+// если где-то дальше вылетит исключение - клиент получит норм json 500, а не страницу с кучей стека
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        // полная инфа об ошибке - тока в консоль сервака, для меня
+        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ОШИБКА при {context.Request.Method} {context.Request.Path}:");
+        Console.WriteLine(ex);
+
+        // если ответ уже начал уходить клиенту - поменять уже нельзя
+        if (context.Response.HasStarted)
+        {
+            throw;
+        }
+
+        context.Response.Clear();
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;   // 500
+        await context.Response.WriteAsJsonAsync(new { error = "Внутренняя ошибка сервера" });
+    }
+});
+
 // === зан2 зад2-3: логирую каждый запрос ===
 // app.Use(...) - inline middleware (способ 1). context - всё про запрос и ответ, next - следующий в цепочке
 // стоит в самом начале, до UseStaticFiles, поэтому видит и запросы к файлам
@@ -170,6 +197,12 @@ app.MapPut("/api/tasks/{id:int}", (int id, UpdateTaskStatusRequest request) =>
 
     task.IsDone = request.IsDone;      // меняю объект прям в списке
     return Results.Ok(task);                                                // 200
+});
+
+// === зан2 зад8: тестовый endpoint который специально падает ===
+app.MapGet("/api/crash-test", () =>
+{
+    throw new Exception("Тестовая ошибка");
 });
 
 // запуск сервака: начинает слушать порт и обрабатывать запросы
