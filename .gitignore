@@ -481,8 +481,10 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Секретные ключи (OMDB API key)
-config.js
+# Базы данных SQLite (создаются автоматически при запуске)
+*.db
+*.db-shm
+*.db-wal
 
 # macOS
 .DS_Store

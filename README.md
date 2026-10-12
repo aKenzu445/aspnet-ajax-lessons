@@ -2,7 +2,5 @@
 
 | Папка | Задание |
 |---|---|
-| `OmdbSearch/` | Ajax часть 2: поиск фильмов через OMDB API (HTML + JS) |
-| `Lesson1.WebServer/` | Занятия 1–5: Task Manager на ASP.NET Core |
-
-Состояние проекта после каждого занятия отмечено тегами `lesson-1` … `lesson-5`.
+| [`OmdbSearch/`](OmdbSearch/) | Ajax часть 2: поиск фильмов через OMDB API (HTML + JS). **[Открыть сайт](https://akenzu445.github.io/aspnet-ajax-lessons/OmdbSearch/)** |
+| `Lesson01/` … `Lesson09/` | Занятия 1–9: приложение Task Manager на ASP.NET Core (в разработке) |
