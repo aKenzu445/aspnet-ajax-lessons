@@ -12,4 +12,8 @@ public class TaskItem
 
     // зан5 зад11: дата и время создания (новый столбец -> миграция AddCreatedAt)
     public DateTime CreatedAt { get; set; }
+
+    // дз зан5: категория задачи, необязательная
+    // string? - может быть null, в базе столбец тоже допускает NULL
+    public string? Category { get; set; }
 }

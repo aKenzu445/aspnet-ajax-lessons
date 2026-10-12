@@ -24,12 +24,32 @@ public class TasksModel : PageModel
     // стартовый список задач для серверной отрисовки (SSR)
     public List<TaskItem> InitialTasks { get; set; } = new();
 
-    // OnGet вызывается автоматически при GET-запросе страницы (/Tasks).
-    // Занятие 5: стал асинхронным (async Task), потому что читает из базы.
-    public async Task OnGetAsync()
+    // дз зан5: все категории что есть (для фильтра) и какая выбрана (null - все задачи)
+    public List<string> Categories { get; set; } = new();
+    public string? SelectedCategory { get; set; }
+
+    // OnGet срабатывает сам на GET /Tasks
+    // зан5: стал async, т.к. читает из базы
+    // дз: category прилетает из адреса /Tasks?category=Работа (форма фильтра, method="get")
+    public async Task OnGetAsync(string? category)
     {
-        // Занятие 5, задача 10: читаем из БАЗЫ — тот же источник, что у GET /api/tasks
-        InitialTasks = await _db.Tasks.ToListAsync();
+        // зан5 зад10: читаю из БАЗЫ - тот же источник что у GET /api/tasks
+        // дз: фильтр по категории через LINQ
+        IQueryable<TaskItem> query = _db.Tasks;
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(t => t.Category == category);
+        }
+        InitialTasks = await query.ToListAsync();
+        SelectedCategory = category;
+
+        // категории без повторов: Select - тока поле Category, Where - без пустых, Distinct - без повторов, OrderBy - по алфавиту
+        Categories = await _db.Tasks
+            .Where(t => t.Category != null)
+            .Select(t => t.Category!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
 
         // зан4 зад2: описание пишу через ViewData (словарь ключ -> значение)
         // его можно читать и как ViewBag.Description - ViewBag это не отдельная штука,
@@ -42,7 +62,7 @@ public class TasksModel : PageModel
     // OnPost срабатывает на POST /Tasks (submit в <form method="post">)
     // title берется из поля формы с name="title"
     // Task<IActionResult> - то же что IActionResult, тока метод async (результат будет потом)
-    public async Task<IActionResult> OnPostAsync(string title)
+    public async Task<IActionResult> OnPostAsync(string title, string? category)
     {
         // === зан4 зад9: проверка обычной формы ===
         // пустое название или одни пробелы - не добавляю, пишу ошибку в TempData и обратно на страницу
@@ -63,7 +83,8 @@ public class TasksModel : PageModel
         {
             Title = title.Trim(),
             IsDone = false,
-            CreatedAt = DateTime.Now     // зан5 зад11: дата создания
+            CreatedAt = DateTime.Now,    // зан5 зад11: дата создания
+            Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim()   // дз
         });
         await _db.SaveChangesAsync();
 

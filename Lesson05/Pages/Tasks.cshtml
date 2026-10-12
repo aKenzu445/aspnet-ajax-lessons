@@ -36,6 +36,28 @@
     <!-- зад8-10 + дз: список задач -->
     <section class="card">
         <h2>Список</h2>
+        @* дз зан5: фильтр по категории
+           method="get" - выбор попадает в адрес /Tasks?category=Работа и прилетает в OnGetAsync(string? category) *@
+        <form method="get" class="filter-form">
+            <label for="categoryFilter">Категория:</label>
+            <select id="categoryFilter" name="category">
+                <option value="">Все задачи</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c" selected="@(c == Model.SelectedCategory)">@c</option>
+                }
+            </select>
+            <button type="submit">Применить</button>
+        </form>
+
+        @* подсказки для поля Категория в формах добавления *@
+        <datalist id="categoryOptions">
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c"></option>
+            }
+        </datalist>
+
         <button id="loadTasksBtn">Обновить список</button>
 
         @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
@@ -63,6 +85,7 @@
         <!-- зад9: добавить через ajax (без перезагрузки) -->
         <h3>Добавить задачу (AJAX)</h3>
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
+        <input id="newTaskCategory" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
 
@@ -73,6 +96,7 @@
         <h3>Добавить задачу (обычная форма)</h3>
         <form method="post">
             <input name="title" type="text" placeholder="Новая задача">
+            <input name="category" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
             <button type="submit">Добавить (с перезагрузкой)</button>
         </form>
 
@@ -108,6 +132,7 @@
                         <input type="checkbox" ${task.isDone ? "checked" : ""}
                                onchange="toggleTask(${task.id}, this.checked)">
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
+                        ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
                         <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
                         <button onclick="deleteTask(${task.id})">Удалить</button>
                         <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
@@ -135,7 +160,10 @@
         }
 
         async function loadTasks() {
-            const response = await fetch("/api/tasks");
+            // дз зан5: учитываю фильтр (?category=... в адресе), чтоб после ajax он не слетал
+            const category = new URLSearchParams(location.search).get("category");
+            const url = category ? `/api/tasks?category=${encodeURIComponent(category)}` : "/api/tasks";
+            const response = await fetch(url);
 
             // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
             if (!response.ok) {
@@ -176,7 +204,10 @@
             const response = await fetch("/api/tasks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                body: JSON.stringify({ title: input.value })
+                body: JSON.stringify({
+                    title: input.value,
+                    category: document.getElementById("newTaskCategory").value   // дз зан5
+                })
             });
             const data = await response.json();
 

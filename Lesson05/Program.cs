@@ -186,13 +186,23 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 // адреса не поменялись, поэтому js трогать не пришлось
 var tasksApi = app.MapGroup("/api/tasks");
 
-// --- Занятие 1, задача 8. Список задач (GET /api/tasks) ---
-// → JSON-массив [ { "id": 1, "title": "...", "isDone": false }, ... ]
-// Занятие 5, задача 7: данные читаются из БАЗЫ через EF Core, а не из списка в памяти.
-// Параметр TaskDbContext db ASP.NET Core подставляет сам (зарегистрирован через AddDbContext).
-// async/await — запрос к базе идёт "в фоне", поток сервера не простаивает в ожидании.
-// ToListAsync — выполнить запрос к таблице Tasks и вернуть результат списком.
-tasksApi.MapGet("/", async (TaskDbContext db) => await db.Tasks.ToListAsync());
+// --- GET /api/tasks - список (зан1 зад8) ---
+// зан5 зад7: теперь читаю из базы через EF, а не из списка в памяти
+// db (TaskDbContext) asp.net сам подсовывает, я его в Program.cs зарегал
+// async/await чтоб сервак не тупил пока база отвечает, ToListAsync - выполнить и получить список
+// дз зан5: можно фильтр ?category=Работа
+tasksApi.MapGet("/", async (string? category, TaskDbContext db) =>
+{
+    // IQueryable - запрос еще НЕ выполнен, можно докидывать условия
+    IQueryable<TaskItem> query = db.Tasks;
+
+    if (!string.IsNullOrEmpty(category))
+    {
+        query = query.Where(t => t.Category == category);   // LINQ Where -> SQL WHERE
+    }
+
+    return await query.ToListAsync();   // тока тут запрос реально уходит в базу
+});
 
 // --- GET /api/tasks/{id} - одна задача (зан2 зад4-5) ---
 // /api/tasks/1 -> 200, /api/tasks/99 -> 404
@@ -226,7 +236,9 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
     {
         Title = request.Title.Trim(),    // Trim - убрать пробелы по краям
         IsDone = false,
-        CreatedAt = DateTime.Now         // зан5 зад11: дата создания
+        CreatedAt = DateTime.Now,        // зан5 зад11: дата создания
+        // дз зан5: пустую категорию сохраняю как null ("без категории")
+        Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim()
     };
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
     await db.SaveChangesAsync();     // делаю INSERT в базе, после этого у created уже есть Id
@@ -290,7 +302,7 @@ app.Run();
 public record EchoRequest(string? Text);
 
 // зад9: тело POST /api/tasks
-public record CreateTaskRequest(string? Title);
+public record CreateTaskRequest(string? Title, string? Category = null);   // Category - дз зан5
 
 // дз: тело запроса PUT /api/tasks/{id}
 public record UpdateTaskStatusRequest(bool IsDone);

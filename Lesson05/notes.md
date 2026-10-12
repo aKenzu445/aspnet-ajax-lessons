@@ -198,3 +198,25 @@ DELETE /api/tasks/999               → 404
    #4 После миграции           | 12.10.2026 23:35
    #5 AJAX с датой             | 12.10.2026 23:35
    ```
+
+## Домашнее задание. Категория задачи и фильтр через LINQ
+
+1. `TaskItem.Category` — `string?` (необязательное поле).
+2. Третья миграция `dotnet ef migrations add AddCategory`:
+   ```csharp
+   migrationBuilder.AddColumn<string>(name: "Category", table: "Tasks", type: "TEXT", nullable: true);
+   ```
+   `nullable: true`: у старых задач категория просто `NULL`, данные не теряются.
+3. **API:** `POST /api/tasks` принимает `{ "title": "...", "category": "..." }`. `GET /api/tasks?category=Работа` возвращает только эту категорию.
+4. **Обе формы** (AJAX и классическая) получили поле «Категория» с подсказками (`<datalist>` из уже существующих категорий).
+5. **Фильтр на `/Tasks`:** форма `method="get"` с выпадающим списком → адрес `/Tasks?category=Работа` → `OnGetAsync(string? category)`:
+   ```csharp
+   IQueryable<TaskItem> query = _db.Tasks;
+   if (!string.IsNullOrEmpty(category))
+       query = query.Where(t => t.Category == category);   // LINQ → SQL WHERE
+   InitialTasks = await query.ToListAsync();
+   ```
+   Список категорий для фильтра: `Where(не null) → Select(t => t.Category) → Distinct() → OrderBy → ToListAsync()`.
+6. После AJAX-добавления/удаления JS запрашивает `/api/tasks?category=...` с тем же фильтром, поэтому фильтр не «сбрасывается».
+
+**Проверка:** `/Tasks?category=Работа` → только «Отчёт» и «Созвон». `/Tasks` → все 7 задач. На странице «Учёба» добавлена «Лабораторная» через AJAX и появилась в отфильтрованном списке.
