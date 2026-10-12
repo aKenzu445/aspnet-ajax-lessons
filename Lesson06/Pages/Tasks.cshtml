@@ -94,10 +94,13 @@
            страница ПОЛНОСТЬЮ перезагружается (редирект), в отличие от ajax формы выше
            тег-хелпер form сам добавляет скрытый __RequestVerificationToken (защита от CSRF) *@
         <h3>Добавить задачу (обычная форма)</h3>
+        @* зан6 зад8: поля на тег-хелперах asp-for="NewTask.*" вместо name="title"
+           ошибка (asp-validation-for) показывается так же как на странице редактирования *@
         <form method="post">
-            <input name="title" type="text" placeholder="Новая задача">
-            <input name="category" type="text" placeholder="Категория (необязательно)" list="categoryOptions">
+            <input asp-for="NewTask.Title" placeholder="Новая задача" />
+            <input asp-for="NewTask.Category" placeholder="Категория (необязательно)" list="categoryOptions" />
             <button type="submit">Добавить (с перезагрузкой)</button>
+            <div><span asp-validation-for="NewTask.Title" class="field-error"></span></div>
         </form>
 
         <!-- зан2 зад4: найти задачу по id -->

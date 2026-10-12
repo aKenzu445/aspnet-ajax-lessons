@@ -28,13 +28,27 @@ public class TasksModel : PageModel
     public List<string> Categories { get; set; } = new();
     public string? SelectedCategory { get; set; }
 
+    // === зан6 зад8: новая задача из обычной формы ===
+    // вместо OnPost(string title) теперь привязка модели [BindProperty]:
+    // поля asp-for="NewTask.Title" / "NewTask.Category" заполняют этот объект,
+    // а [Required]/[StringLength] с TaskItem.Title проверяются сами
+    [BindProperty]
+    public TaskItem NewTask { get; set; } = new();
+
     // OnGet срабатывает сам на GET /Tasks
     // зан5: стал async, т.к. читает из базы
-    // дз: category прилетает из адреса /Tasks?category=Работа (форма фильтра, method="get")
+    // дз зан5: category прилетает из адреса /Tasks?category=Работа (форма фильтра)
     public async Task OnGetAsync(string? category)
     {
+        await LoadPageDataAsync(category);
+    }
+
+    // грузит всё что надо для страницы. зову из OnGetAsync и из OnPostAsync,
+    // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
+    private async Task LoadPageDataAsync(string? category)
+    {
         // зан5 зад10: читаю из БАЗЫ - тот же источник что у GET /api/tasks
-        // дз: фильтр по категории через LINQ
+        // дз зан5: фильтр по категории через LINQ
         IQueryable<TaskItem> query = _db.Tasks;
         if (!string.IsNullOrEmpty(category))
         {
@@ -58,33 +72,28 @@ public class TasksModel : PageModel
         ViewData["Description"] = "Здесь вы можете управлять своими задачами";
     }
 
-    // === зан4 зад3: обработчик обычной формы добавления ===
-    // OnPost срабатывает на POST /Tasks (submit в <form method="post">)
-    // title берется из поля формы с name="title"
-    // Task<IActionResult> - то же что IActionResult, тока метод async (результат будет потом)
-    public async Task<IActionResult> OnPostAsync(string title, string? category)
+    // === зан4 зад3 -> зан6 зад8: обычная форма добавления ===
+    // OnPost срабатывает на POST /Tasks (когда жмут submit в <form method="post">)
+    // с зан6 данные прилетают в NewTask ([BindProperty]), параметров у метода нет
+    // Task<IActionResult> - результат (страница, редирект...), метод асинхронный
+    public async Task<IActionResult> OnPostAsync()
     {
-        // === зан4 зад9: проверка обычной формы ===
-        // пустое название или одни пробелы - не добавляю, пишу ошибку в TempData и обратно на страницу
-        //
-        // сравнение двух подходов:
-        // - ajax (POST /api/tasks): сервак отдает 400 + json, js сам показывает ошибку, страница не перезагружается.
-        //   норм для api и интерактивных страниц, ответ поймет любой клиент
-        // - обычная форма: после редиректа браузер получает 200 и новую страницу, ошибка через TempData.
-        //   норм когда надо чтоб работало без js и "отправил форму - получил страницу"
-        if (string.IsNullOrWhiteSpace(title))
+        // зан6 зад8: та же проверка что на странице редактирования (зад7) - по атрибутам TaskItem
+        // ошибка - показываю страницу сразу (без редиректа), текст ошибки у поля
+        // (в зан4 зад9 тут была ручная проверка IsNullOrWhiteSpace + TempData["Error"])
+        if (!ModelState.IsValid)
         {
-            TempData["Error"] = "Название задачи не может быть пустым";
-            return RedirectToPage();
+            await LoadPageDataAsync(null);
+            return Page();
         }
 
         // зан5 зад10: сохраняю в базу (Id даст база)
         _db.Tasks.Add(new TaskItem
         {
-            Title = title.Trim(),
+            Title = NewTask.Title.Trim(),
             IsDone = false,
             CreatedAt = DateTime.Now,    // зан5 зад11: дата создания
-            Category = string.IsNullOrWhiteSpace(category) ? null : category.Trim()   // дз
+            Category = string.IsNullOrWhiteSpace(NewTask.Category) ? null : NewTask.Category.Trim()   // дз зан5
         });
         await _db.SaveChangesAsync();
 

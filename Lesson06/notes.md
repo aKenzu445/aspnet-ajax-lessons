@@ -68,3 +68,14 @@ GET /api/tasks/1  → название осталось «Изучить ASP.NET
 `return Page()` вместо редиректа: страница показывается сразу с введёнными значениями и ошибками (`ModelState` живёт только в этом запросе).
 
 **Миграция `TitleMaxLength`:** `[StringLength(100)]` меняет и модель EF Core (максимальная длина столбца). Без миграции EF посчитал бы модель изменённой, и `Database.Migrate()` при запуске выдал бы ошибку «pending model changes». В SQLite длина `TEXT` не ограничивается, поэтому метод `Up()` пустой. Но «снимок» модели (`TaskDbContextModelSnapshot.cs`) теперь содержит `.HasMaxLength(100)`. Для SQL Server/PostgreSQL здесь был бы `AlterColumn` на `nvarchar(100)`.
+
+## Задача 8. Форма добавления на [BindProperty] и тег-хелперах
+
+- Было: `OnPost(string title, string? category)` + `<input name="title">` + ручная проверка `IsNullOrWhiteSpace` с `TempData["Error"]` (занятие 4).
+- Стало: `[BindProperty] public TaskItem NewTask`, метод `OnPostAsync()` **без параметров**, поля `asp-for="NewTask.Title"` и `asp-for="NewTask.Category"`, ошибка через `asp-validation-for="NewTask.Title"`.
+- Правила берутся из тех же атрибутов `[Required]`/`[StringLength(100)]` на `TaskItem.Title`, что и при редактировании. Обе формы проверяются **единообразно**.
+- При ошибке `return Page()`. Так как `OnGetAsync` при этом не вызывается, загрузка списка вынесена в общий метод `LoadPageDataAsync()`, который вызывают оба обработчика.
+
+**Проверка:** `NewTask.Title = "   "` → 200, «Название обязательно» под полем, задача не создана. Корректное название → 302 и задача в базе (с категорией).
+
+Сгенерированное поле: `<input ... data-val-required="Название обязательно" data-val-length-max="100" maxlength="100" name="NewTask.Title" />`. Тег-хелпер сам добавил `maxlength="100"` из `[StringLength(100)]`.
