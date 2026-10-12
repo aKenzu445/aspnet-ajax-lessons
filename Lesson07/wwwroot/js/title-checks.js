@@ -21,3 +21,23 @@ function attachForbiddenWordsCheck(form, input) {
         }
     });
 }
+
+
+// === зад8: проверяю название перед ajax запросом (POST /api/tasks) ===
+// вернет текст ошибки или null если всё ок
+// правила те же что на сервере: [Required], [StringLength(100, MinimumLength = 3)], [NoForbiddenWords]
+// зад10: длину считаю после trim(), пробелы по краям не в счет
+function findTitleProblem(title) {
+    const value = (title ?? "").trim();
+
+    if (value.length === 0) {
+        return "Название обязательно";
+    }
+    if (value.length < 3 || value.length > 100) {
+        return "От 3 до 100 символов";
+    }
+    if (value.toLowerCase().includes("тест")) {
+        return "Название не должно содержать слово 'тест'";
+    }
+    return null;
+}

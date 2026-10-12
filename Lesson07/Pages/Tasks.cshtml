@@ -211,6 +211,14 @@
         document.getElementById("addTaskBtn").addEventListener("click", async () => {
             const input = document.getElementById("newTaskTitle");
 
+            // === зан7 зад8: ПЕРВЫЙ рубеж - проверяю в браузере ДО отправки ===
+            // (defense in depth, защита в два слоя) ошибка сразу, без запроса на сервак
+            const problem = findTitleProblem(input.value);   // функция в wwwroot/js/title-checks.js
+            if (problem) {
+                showTaskMessage(problem, true);
+                return;   // fetch не делаю - запрос не уходит
+            }
+
             const response = await fetch("/api/tasks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
@@ -221,8 +229,10 @@
             });
             const data = await response.json();
 
-            if (!response.ok) {                       // 400 - пустое название
-                showTaskMessage(data.error, true);
+            // ВТОРОЙ рубеж - сервак. его проверку не убираю: клиентскую можно обойти (postman, выключенный js)
+            // зан7 зад7: ошибки валидации прилетают списком { "errors": [...] }
+            if (!response.ok) {
+                showTaskMessage(data.errors ? data.errors.join("; ") : data.error, true);
                 return;
             }
 

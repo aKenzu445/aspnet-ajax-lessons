@@ -1,4 +1,5 @@
 // занятие 7. валидация: в браузере, на серваке и свои атрибуты (продолжаю проект с зан1-6)
+using System.ComponentModel.DataAnnotations; // Validator, ValidationResult (зан7 зад7)
 using System.Diagnostics;          // Stopwatch - секундомер (зан2 зад3)
 using System.Globalization;
 using System.Text.Encodings.Web;   // TextEncoderSettings (кириллица в razor)
@@ -234,21 +235,31 @@ tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 // шлю { "title": "Купить хлеб" } -> 201 и созданная задача
 tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
 {
-    // IsNullOrWhiteSpace - true если null, "" или одни пробелы
-    if (string.IsNullOrWhiteSpace(request.Title))
-    {
-        return Results.BadRequest(new { Error = "Название задачи не может быть пустым" }); // 400
-    }
-
     // зан5 зад8: создаю БЕЗ Id - база сама даст следующий номер
     var created = new TaskItem
     {
-        Title = request.Title.Trim(),    // Trim - убрать пробелы по краям
+        Title = request.Title?.Trim() ?? "",   // Trim - убрать пробелы по краям, null -> ""
         IsDone = false,
         CreatedAt = DateTime.Now,        // зан5 зад11: дата создания
         // дз зан5: пустую категорию сохраняю как null ("без категории")
         Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim()
     };
+
+    // ===== Занятие 7, задача 7. Серверная валидация в Minimal API =====
+    // Minimal API НЕ проверяет атрибуты [Required], [StringLength], [NoForbiddenWords]...
+    // автоматически (это делает только ModelState в Razor Pages/MVC). Поэтому проверяем вручную:
+    // Validator.TryValidateObject прогоняет ВСЕ атрибуты объекта и складывает ошибки в results.
+    // Правила те же, что у Razor-страниц: они записаны один раз — в классе TaskItem.
+    // (Ручная проверка IsNullOrWhiteSpace из занятия 1 больше не нужна: её заменил [Required].)
+    var results = new List<ValidationResult>();
+    bool isValid = Validator.TryValidateObject(created, new ValidationContext(created), results, validateAllProperties: true);
+
+    if (!isValid)
+    {
+        // 400 и список ошибок: { "errors": ["Название обязательно", ...] }
+        return Results.BadRequest(new { Errors = results.Select(r => r.ErrorMessage) });
+    }
+
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
     await db.SaveChangesAsync();     // делаю INSERT в базе, после этого у created уже есть Id
 
