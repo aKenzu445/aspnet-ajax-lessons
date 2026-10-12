@@ -172,3 +172,22 @@ h1 {
     color: #555;
     margin: 0 0 16px;
 }
+
+/* зад4, зад9: сообщения после редиректа (зеленое/красное) */
+.alert {
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.alert-success {
+    background: #e3f4e7;
+    color: #1e7b34;
+    border: 1px solid #b7e0c1;
+}
+
+.alert-error {
+    background: #fbe5e3;
+    color: #b0281b;
+    border: 1px solid #f2b8b2;
+}
