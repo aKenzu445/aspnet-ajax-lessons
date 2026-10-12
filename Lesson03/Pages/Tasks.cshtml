@@ -11,13 +11,24 @@
         @* зад5: список рисует СЕРВАК при загрузке (ни одного ajax)
            Model.InitialTasks заполняется в TasksModel.OnGet() (Tasks.cshtml.cs)
            razor сам экранирует task.Title, так что html в названии не сработает *@
-        <ul id="taskList" class="task-list">
-            @foreach (var task in Model.InitialTasks)
-            {
-                @* зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
-                <partial name="_TaskItem" model="task" />
-            }
-        </ul>
+        @* зад10: если задач нет - норм сообщение вместо пустого <ul></ul>
+           пустой список (скрыт через hidden) всё равно вывожу: js закинет туда первую задачу и спрячет сообщение без перезагрузки *@
+        @if (Model.InitialTasks.Count == 0)
+        {
+            <p id="emptyMessage" class="empty-message">Задач пока нет, добавьте первую!</p>
+            <ul id="taskList" class="task-list" hidden></ul>
+        }
+        else
+        {
+            <p id="emptyMessage" class="empty-message" hidden>Задач пока нет, добавьте первую!</p>
+            <ul id="taskList" class="task-list">
+                @foreach (var task in Model.InitialTasks)
+                {
+                    @* зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
+                    <partial name="_TaskItem" model="task" />
+                }
+            </ul>
+        }
 
         <!-- зад9: добавить задачу -->
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
@@ -77,6 +88,11 @@
             for (const task of tasks) {
                 list.innerHTML += taskToHtml(task);
             }
+
+            // зад10: "задач пока нет" показываю тока когда список пустой. hidden = true прячет, false показывает
+            const isEmpty = tasks.length === 0;
+            document.getElementById("emptyMessage").hidden = !isEmpty;
+            list.hidden = isEmpty;
         }
 
         document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
