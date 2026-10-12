@@ -1,0 +1,13 @@
+@* зан7 зад2: скрипты валидации в браузере (unobtrusive)
+   стандартный partial из шаблонов asp.net, подключаю на страницах с формами:
+       section Scripts { <partial name="_ValidationScriptsPartial" /> }
+
+   1) jquery.js - сам jQuery (нужен двум другим)
+   2) jquery.validate.js - проверка полей в браузере
+   3) jquery.validate.unobtrusive.js - "переводчик": читает data-val-* которые asp-for сделал из [Required], [StringLength] и тд,
+      и по ним настраивает jquery.validate. правила второй раз в js НЕ пишу
+
+   файлы с CDN jsDelivr (точные версии), в wwwroot ничего класть не надо *@
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.21.0/dist/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>

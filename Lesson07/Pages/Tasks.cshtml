@@ -114,6 +114,9 @@
 @* зад7: скрипт для списка задач - в section Scripts
    layout выводит её в RenderSection("Scripts"), поэтому этот js попадает ТОКА на эту страницу *@
 @section Scripts {
+    @* зан7 зад2: валидация в браузере (unobtrusive) для обычной формы добавления *@
+    <partial name="_ValidationScriptsPartial" />
+
     <script>
         // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
         const API_KEY = "lesson2-secret";
