@@ -22,11 +22,22 @@ public class EditModel : PageModel
     public TaskItem Task { get; set; } = new();
 
     // GET /Tasks/Edit/5 -> id = 5 (из маршрута {id:int})
-    public async Task OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        // FindAsync вернёт null, если задачи нет (это обрабатывается в задаче 10)
-        Task = (await _db.Tasks.FindAsync(id))!;
+        TaskItem? task = await _db.Tasks.FindAsync(id);
+
+        // === зан6 зад10: протухшая ссылка, задачи с таким id уже нет ===
+        // без проверки Model.Task был бы null и страница упала бы с 500
+        // вместо этого норм сообщение (TempData["Error"] из зан4) и редирект
+        if (task == null)
+        {
+            TempData["Error"] = "Задача не найдена, возможно, она уже удалена";
+            return RedirectToPage("/Tasks");
+        }
+
+        Task = task;
         SetDescription();
+        return Page();   // показать страницу с формой
     }
 
     // описание страницы (правило зан4: Description в PageModel)
@@ -54,8 +65,15 @@ public class EditModel : PageModel
         // объекта из OnGetAsync уже нет: каждый запрос - НОВЫЙ EditModel и НОВЫЙ TaskDbContext
         TaskItem? existing = await _db.Tasks.FindAsync(Task.Id);
 
+        // зад10: задачу могли удалить пока форма была открыта
+        if (existing == null)
+        {
+            TempData["Error"] = "Задача не найдена, возможно, она уже удалена";
+            return RedirectToPage("/Tasks");
+        }
+
         // переношу новые значения из формы в объект из базы
-        existing!.Title = Task.Title;
+        existing.Title = Task.Title;
         existing.IsDone = Task.IsDone;
 
         await _db.SaveChangesAsync();   // EF сделает UPDATE тока измененных столбцов
