@@ -1,0 +1,50 @@
+@page "{id:int}"
+@model Lesson1.WebServer.Pages.Tasks.EditModel
+@* зан6 зад2: страница редактирования одной задачи
+   page "{id:int}" - id становится частью адреса: /Tasks/Edit/1, /Tasks/Edit/2 ...
+   (путь /Tasks/Edit из папки Pages/Tasks и файла Edit.cshtml)
+   :int - то же ограничение что в зан2: /Tasks/Edit/abc -> 404 *@
+@{
+    // RouteData.Values["id"] - id из адреса
+    ViewData["Title"] = $"Редактирование задачи №{RouteData.Values["id"]}";
+}
+
+@* зад4: форма редактирования на тег-хелперах
+   asp-for="Task.Title" сам делает name="Task.Title", id="Task_Title" и value="текущее значение"
+   если переименовать свойство а разметку забыть - не скомпилится (с обычным name="title" никто бы не заметил) *@
+<section class="card">
+    <form method="post">
+        @* скрытое поле с Id - так сервак на POST поймет КАКУЮ задачу редачить *@
+        <input type="hidden" asp-for="Task.Id" />
+
+        <div class="form-row">
+            @* label asp-for берет имя поля из [Display(Name = "Название")] в TaskItem *@
+            <label asp-for="Task.Title"></label>
+            <input asp-for="Task.Title" />
+            @* зад7: текст ошибки для поля Title *@
+            <span asp-validation-for="Task.Title" class="field-error"></span>
+        </div>
+
+        @* дз зан6: категория - выпадающий список
+           asp-for="Task.Category" - привязка к свойству (и выбор текущего)
+           asp-items - варианты из EditModel.CategoryOptions (заранее заданный список)
+           на серваке проверяет мой атрибут [AllowedCategory] *@
+        <div class="form-row">
+            <label asp-for="Task.Category"></label>
+            <select asp-for="Task.Category" asp-items="Model.CategoryOptions">
+                <option value="">Без категории</option>
+            </select>
+            <span asp-validation-for="Task.Category" class="field-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label>
+                @* для bool asp-for делает checkbox и ставит checked если IsDone == true *@
+                <input asp-for="Task.IsDone" type="checkbox" /> Выполнено
+            </label>
+        </div>
+
+        <button type="submit">Сохранить</button>
+        <a asp-page="/Tasks">Отмена</a>
+    </form>
+</section>

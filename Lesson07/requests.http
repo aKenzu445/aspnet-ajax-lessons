@@ -1,0 +1,38 @@
+### Проверки занятия 6. Запусти проект занятия 6 (▶). Адрес: http://localhost:5107
+### Формы редактирования удобнее проверять в браузере (нужен анти-подделочный токен).
+
+@host = http://localhost:5107
+@key = lesson2-secret
+
+### Подготовка: создать задачу
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Изучитьт ASP.NET" }
+
+### Задачи 2–4: страница редактирования (форма предзаполнена)
+GET {{host}}/Tasks/Edit/1
+
+### Задача 2: не число → 404
+GET {{host}}/Tasks/Edit/abc
+
+### Задача 9: отметить выполненной → 200 { ..., "isDone": true }
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "isDone": true }
+
+### Задача 9: повторный GET подтверждает изменение
+GET {{host}}/api/tasks/1
+
+### Задача 9: несуществующая задача → 404
+PUT {{host}}/api/tasks/999
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "isDone": true }
+
+### Задача 10: несуществующая задача на странице редактирования → 302 на /Tasks с сообщением
+GET {{host}}/Tasks/Edit/999
