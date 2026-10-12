@@ -2,6 +2,7 @@
 using System.Diagnostics;          // Stopwatch - секундомер (зан2 зад3)
 using System.Globalization;
 using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
+using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
 
 // builder - тут настраиваю сервисы и конфиг
@@ -34,6 +35,10 @@ app.Use(async (context, next) =>
 // без него /index.html был бы 404, сервак про wwwroot не знал бы
 app.UseDefaultFiles();
 app.UseStaticFiles();
+
+// === зан2 зад7: проверка api ключа для POST/PUT/DELETE ===
+// сам класс в папке Middleware. стоит до endpoints, так что без ключа до обработчиков даже не дойдет
+app.UseMiddleware<ApiKeyMiddleware>();
 
 // === зад2: первый свой endpoint ===
 // GET /api/hello -> просто текст

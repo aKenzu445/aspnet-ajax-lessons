@@ -65,6 +65,9 @@
 </main>
 
 <script>
+    // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
+    const API_KEY = "lesson2-secret";
+
     // === зад4 ===
     // по клику делаю GET /api/server-info и кидаю ответ в #result
     // страница не перезагружается, меняется тока блок
@@ -183,7 +186,7 @@
 
         const response = await fetch("/api/tasks", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
             body: JSON.stringify({ title: input.value })
         });
         const data = await response.json();
@@ -201,7 +204,10 @@
     // === зад10: удаление ===
     // вызывается кнопкой Удалить (onclick в строке)
     async function deleteTask(id) {
-        const response = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+        const response = await fetch(`/api/tasks/${id}`, {
+            method: "DELETE",
+            headers: { "X-Api-Key": API_KEY }
+        });
         const data = await response.json();
 
         if (!response.ok) {                       // 404 - задачи уже нет
@@ -217,7 +223,7 @@
     async function toggleTask(id, isDone) {
         const response = await fetch(`/api/tasks/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
             body: JSON.stringify({ isDone: isDone })
         });
 
