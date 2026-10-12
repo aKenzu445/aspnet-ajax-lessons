@@ -160,3 +160,15 @@ a.button {
 .info-table td:first-child {
     font-weight: bold;
 }
+
+/* --- зан4 --- */
+/* зад2, зад10: заголовок страницы и описание под ним */
+h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+}
+
+.page-description {
+    color: #555;
+    margin: 0 0 16px;
+}
