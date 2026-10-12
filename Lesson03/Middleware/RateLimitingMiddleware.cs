@@ -8,8 +8,8 @@ namespace Lesson1.WebServer.Middleware;
 public class RateLimitingMiddleware
 {
     // зан3: лимиты беру из appsettings.json (RateLimiting), а не хардкод. если нету - 5 за 10 сек
-    private readonly int MaxRequests;
-    private readonly int WindowSeconds;
+    private readonly int _maxRequests;
+    private readonly int _windowSeconds;
 
     // static - один словарь на все запросы. ключ - ip, значение - когда были его запросы
     private static readonly Dictionary<string, List<DateTime>> RequestsByIp = new();
@@ -23,8 +23,8 @@ public class RateLimitingMiddleware
     public RateLimitingMiddleware(RequestDelegate next, IConfiguration configuration)
     {
         _next = next;
-        MaxRequests = configuration.GetValue("RateLimiting:MaxRequests", 5);
-        WindowSeconds = configuration.GetValue("RateLimiting:WindowSeconds", 10);
+        _maxRequests = configuration.GetValue("RateLimiting:MaxRequests", 5);
+        _windowSeconds = configuration.GetValue("RateLimiting:WindowSeconds", 10);
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -50,9 +50,9 @@ public class RateLimitingMiddleware
             }
 
             // выкидываю записи старше 10 сек - они уже не в счет
-            times.RemoveAll(t => (now - t).TotalSeconds > WindowSeconds);
+            times.RemoveAll(t => (now - t).TotalSeconds > _windowSeconds);
 
-            tooMany = times.Count >= MaxRequests;
+            tooMany = times.Count >= _maxRequests;
             if (!tooMany)
             {
                 times.Add(now);   // запоминаю этот запрос
@@ -64,7 +64,7 @@ public class RateLimitingMiddleware
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;   // 429
             await context.Response.WriteAsJsonAsync(new
             {
-                error = $"Слишком много запросов: не больше {MaxRequests} за {WindowSeconds} секунд. Подождите немного."
+                error = $"Слишком много запросов: не больше {_maxRequests} за {_windowSeconds} секунд. Подождите немного."
             });
             return;
         }
