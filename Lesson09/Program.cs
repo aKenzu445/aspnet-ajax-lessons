@@ -7,6 +7,7 @@ using System.Text.Unicode;         // UnicodeRanges
 using Microsoft.Extensions.WebEncoders; // WebEncoderOptions
 using Microsoft.EntityFrameworkCore;   // UseSqlite, ToListAsync и тд (зан5)
 using Lesson1.WebServer.Data;     // TaskDbContext - база, ServerInfo (папка Data)
+using Lesson1.WebServer.Dtos;     // DTO для api (зан9)
 using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
 
@@ -213,24 +214,28 @@ tasksApi.MapGet("/", async (int? categoryId, TaskDbContext db) =>
         query = query.Where(t => t.CategoryId == categoryId);   // LINQ Where -> SQL WHERE
     }
 
-    return await query.ToListAsync();   // тока тут запрос реально уходит в базу
+    List<TaskItem> tasks = await query.ToListAsync();   // тока тут запрос реально уходит в базу
+
+    // Занятие 9, задача 2: наружу отдаём не сущности, а DTO — без навигационных свойств
+    return tasks.Select(TaskDto.FromEntity).ToList();
 });
 
 // --- GET /api/tasks/{id} - одна задача (зан2 зад4-5) ---
 // /api/tasks/1 -> 200, /api/tasks/99 -> 404
 // {id:int} - ограничение маршрута, пускает тока если id число. abc -> 404 сразу, до моего кода
-// (без :int на abc было 400 с BadHttpRequestException)
-// зан5 зад7: FindAsync ищет по ключу Id, не нашел - null
+// зан9 зад2: Include + FirstOrDefaultAsync (FindAsync с Include не умеет), отдаю TaskDto
 tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 {
-    TaskItem? task = await db.Tasks.FindAsync(id);
+    TaskItem? task = await db.Tasks
+        .Include(t => t.Category)
+        .FirstOrDefaultAsync(t => t.Id == id);   // первая подходящая строка или null
 
     if (task == null)
     {
         return Results.NotFound(new { Error = "Задача не найдена" });       // 404
     }
 
-    return Results.Ok(task);                                                // 200
+    return Results.Ok(TaskDto.FromEntity(task));                            // 200
 });
 
 // --- POST /api/tasks - добавить (зан1 зад9) ---
