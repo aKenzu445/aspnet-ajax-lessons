@@ -1,5 +1,6 @@
 using Lesson1.WebServer.Data;
 using Lesson1.WebServer.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Lesson1.WebServer.Pages;
@@ -22,6 +23,15 @@ public class StatsModel : PageModel
         UndoneCount = tasks.Count(t => !t.IsDone);
 
         // зад10: описание страницы - по общему правилу в OnGet()
-        ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
+                ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
+    }
+
+    // === дз зан4: кнопка обновить статистику ===
+    // обычная форма без ajax, OnPost без параметров: пересчет будет на следующем GET (OnGet считает заново),
+    // а сообщение доживет после редиректа через TempData
+    public IActionResult OnPost()
+    {
+        TempData["Message"] = $"Статистика обновлена вручную в {DateTime.Now:HH:mm:ss}";
+        return RedirectToPage();   // PRG: после F5 форма второй раз не уйдет
     }
 }
