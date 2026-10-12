@@ -14,13 +14,8 @@
         <ul id="taskList" class="task-list">
             @foreach (var task in Model.InitialTasks)
             {
-                <li class="@(task.IsDone ? "done" : "")">
-                    @* checked="@true" Razor выводит как checked, а при false атрибут не выводит совсем *@
-                    <input type="checkbox" checked="@task.IsDone"
-                           onchange="toggleTask(@task.Id, this.checked)">
-                    <span class="task-title">#@task.Id @task.Title</span>
-                    <button onclick="deleteTask(@task.Id)">Удалить</button>
-                </li>
+                @* зад6: разметка одной строки в partial Pages/Shared/_TaskItem.cshtml *@
+                <partial name="_TaskItem" model="task" />
             }
         </ul>
 
@@ -49,7 +44,10 @@
         return div.innerHTML;
     }
 
-    // разметка одной строки списка (одна задача)
+    // разметка одной строки списка
+    // зан3 зад6: ТА ЖЕ разметка что в partial Pages/Shared/_TaskItem.cshtml
+    // partial работает на серваке и js не может его вызвать при добавлении через ajax,
+    // поэтому тут собираю строку руками (клиентский рендеринг)
     function taskToHtml(task) {
         return `<li class="${task.isDone ? "done" : ""}">
                     <input type="checkbox" ${task.isDone ? "checked" : ""}
