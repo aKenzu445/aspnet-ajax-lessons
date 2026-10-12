@@ -1,0 +1,67 @@
+### Запросы для проверки занятия 1 (замена Postman).
+### В Rider: запусти проект (▶), затем нажми зелёную стрелку слева от нужного запроса.
+
+@host = http://localhost:5102
+
+### Задача 2: текстовый ответ
+GET {{host}}/api/hello
+
+### Задача 3: JSON с информацией о сервере
+GET {{host}}/api/server-info
+
+### Задача 5: сумма (query string)
+GET {{host}}/api/sum?a=10&b=15
+
+### Задача 5: дробные и отрицательные числа
+GET {{host}}/api/sum?a=-2.5&b=1.25
+
+### Задача 5: нет параметра b → 400 (автоматически от Minimal API)
+GET {{host}}/api/sum?a=5
+
+### Задача 6: echo (JSON в теле запроса)
+POST {{host}}/api/echo
+Content-Type: application/json
+
+{ "text": "hello" }
+
+### Задача 6: пустая строка → length 0
+POST {{host}}/api/echo
+Content-Type: application/json
+
+{ "text": "" }
+
+### Задача 7: успешное деление → 200
+GET {{host}}/api/divide?a=10&b=2
+
+### Задача 7: деление на ноль → 400
+GET {{host}}/api/divide?a=10&b=0
+
+### Задача 7: не число → 400
+GET {{host}}/api/divide?a=abc&b=2
+
+### Задача 8: список задач
+GET {{host}}/api/tasks
+
+### Задача 9: добавить задачу → 201
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{ "title": "Купить хлеб" }
+
+### Задача 9: пустое название → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+
+{ "title": "" }
+
+### Задача 10: удалить задачу → 200
+DELETE {{host}}/api/tasks/2
+
+### Задача 10: несуществующая задача → 404
+DELETE {{host}}/api/tasks/999
+
+### Домашнее задание: отметить выполненной → 200
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
+
+{ "isDone": true }
