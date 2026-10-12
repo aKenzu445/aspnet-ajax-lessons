@@ -75,6 +75,11 @@
         const response = await fetch("/api/server-info");
         const info = await response.json();
 
+        if (!response.ok) {                           // типа 429 или 503
+            document.getElementById("result").innerHTML = `<span class="error">Ошибка ${response.status}: ${info.error}</span>`;
+            return;
+        }
+
         document.getElementById("result").innerHTML =
             `Сервер: <b>${info.serverName}</b><br>` +
             `Версия: ${info.version}<br>` +
@@ -94,7 +99,8 @@
         const resultBlock = document.getElementById("sumResult");
 
         if (!response.ok) {
-            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: введите оба числа</span>`;
+            const error = await response.json().catch(() => null);   // 429/503 тоже приходят с json
+            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${error?.error ?? "введите оба числа"}</span>`;
             return;
         }
 
@@ -114,6 +120,11 @@
             body: JSON.stringify({ text: text })
         });
         const data = await response.json();
+
+        if (!response.ok) {
+            document.getElementById("echoResult").innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error}</span>`;
+            return;
+        }
 
         document.getElementById("echoResult").innerHTML =
             `Исходный: ${data.original}<br>` +
@@ -160,6 +171,14 @@
 
     async function loadTasks() {
         const response = await fetch("/api/tasks");
+
+        // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+            return;
+        }
+
         const tasks = await response.json();          // массив задач
 
         const list = document.getElementById("taskList");
