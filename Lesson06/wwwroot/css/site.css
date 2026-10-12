@@ -240,3 +240,10 @@ h1 {
     flex: 1;
     min-width: 200px;
 }
+
+/* зад6: ссылка редактировать */
+a.button-link {
+    color: #2457a6;
+    font-size: 14px;
+    white-space: nowrap;
+}

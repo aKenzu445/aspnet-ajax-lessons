@@ -134,6 +134,7 @@
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
                         ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
                         <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
+                        <a href="/Tasks/Edit/${task.id}" class="button-link">Редактировать</a>
                         <button onclick="deleteTask(${task.id})">Удалить</button>
                         <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
                             <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryToken()}">
