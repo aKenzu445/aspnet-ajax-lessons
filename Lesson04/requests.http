@@ -1,0 +1,29 @@
+### Проверки занятия 3. Запусти проект занятия 3 (▶).
+
+@host = http://localhost:5104
+@key = lesson2-secret
+
+### Задача 1: Razor-страница без layout
+GET {{host}}/Test
+
+### Задача 2–3: главная (Razor + layout)
+GET {{host}}/
+
+### Задачи 4–6: список задач приходит в HTML сразу (SSR)
+GET {{host}}/Tasks
+
+### Задача 9: ошибка API → JSON 500
+GET {{host}}/api/crash-test
+
+### Задача 9: ошибка страницы → HTML Pages/Error.cshtml
+GET {{host}}/crash-test-page
+
+### Задача 10: удалить задачи, затем открыть /Tasks — будет «Задач пока нет»
+DELETE {{host}}/api/tasks/1
+X-Api-Key: {{key}}
+
+### ДЗ: страница «О сервере» без AJAX
+GET {{host}}/About
+
+### Занятия 1–2: API продолжает работать
+GET {{host}}/api/tasks
