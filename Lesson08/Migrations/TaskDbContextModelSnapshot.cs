@@ -17,14 +17,46 @@ namespace Lesson1.WebServer.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
 
+            modelBuilder.Entity("Lesson1.WebServer.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Работа"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Учёба"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Личное"
+                        });
+                });
+
             modelBuilder.Entity("Lesson1.WebServer.Models.TaskItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Category")
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -42,7 +74,23 @@ namespace Lesson1.WebServer.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("Tasks");
+                });
+
+            modelBuilder.Entity("Lesson1.WebServer.Models.TaskItem", b =>
+                {
+                    b.HasOne("Lesson1.WebServer.Models.Category", "Category")
+                        .WithMany("Tasks")
+                        .HasForeignKey("CategoryId");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Lesson1.WebServer.Models.Category", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

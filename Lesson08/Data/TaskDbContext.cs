@@ -15,4 +15,18 @@ public class TaskDbContext : DbContext
 
     // зан8 зад2: таблица Categories
     public DbSet<Category> Categories => Set<Category>();
+
+    // OnModelCreating - тут доп настройка модели (Fluent API, стартовые данные)
+    // override - переопределяю метод из DbContext
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // === зан8 зад3: стартовые категории (seed) ===
+        // HasData - EF запихнет эти строки прям в миграцию (InsertData)
+        // Id пишу сам, так EF понимает какие строки уже добавлял
+        modelBuilder.Entity<Category>().HasData(
+            new Category { Id = 1, Name = "Работа" },
+            new Category { Id = 2, Name = "Учёба" },
+            new Category { Id = 3, Name = "Личное" }
+        );
+    }
 }

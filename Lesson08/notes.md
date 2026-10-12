@@ -24,3 +24,21 @@
 - Код переведён со строки на номер: API принимает `categoryId`, фильтр — `?categoryId=2`, формы — `<select asp-for="...CategoryId" asp-items="Model.CategoryOptions">`.
 
 Проект компилируется («Ошибок: 0»). Миграции пока нет — следующий шаг.
+
+## Задача 3. Миграция со связью и начальными данными
+
+- `TaskDbContext.OnModelCreating`: `modelBuilder.Entity<Category>().HasData(...)` с тремя категориями (Работа, Учёба, Личное).
+- `dotnet ef migrations add AddCategories`. В сгенерированном `Up()` есть всё, что требует задание:
+  - `CreateTable(name: "Categories", ...)` — новая таблица;
+  - `AddColumn<int>(name: "CategoryId", table: "Tasks", nullable: true)` — столбец внешнего ключа;
+  - `InsertData(table: "Categories", ...)` — три seed-строки из `HasData`;
+  - `CreateIndex("IX_Tasks_CategoryId")` + `AddForeignKey("FK_Tasks_Categories_CategoryId")` — индекс и внешний ключ;
+  - `DropColumn(name: "Category", table: "Tasks")` — удаление старого текстового столбца.
+- **Доработка миграции вручную (сохранение данных):** EF поставил `DropColumn("Category")` **первой** операцией, и строковые категории из ДЗ занятий 5–6 пропали бы. Я перенёс `DropColumn` в конец и перед ним добавил два SQL-запроса (`migrationBuilder.Sql`): (1) добавить в `Categories` недостающие названия; (2) проставить задачам `CategoryId` по старому названию. Проверено на копии базы занятия 7:
+  ```
+  ДО:    1|Изучить валидацию|Спорт   5|Нормальная|Хобби   9|Корректная задача|Работа
+  ПОСЛЕ: Categories: 1 Работа, 2 Учёба, 3 Личное, 4 Спорт, 5 Хобби
+         Tasks: 1 → CategoryId 4 (Спорт), 5 → 5 (Хобби), 9 → 1 (Работа)
+  ```
+- `dotnet ef database update` (или запуск проекта). EF выдаёт **предупреждение**, что часть операций нельзя выполнить в транзакции. SQLite не умеет менять столбцы и внешние ключи «на месте», поэтому EF пересоздаёт таблицу `Tasks` (копирует данные во временную таблицу). Это ожидаемо.
+- **Проверка базы:** таблица `Categories` уже содержит 3 строки, хотя в коде нет ни одного ручного INSERT, только `HasData`. В `Tasks` появился столбец `CategoryId` и внешний ключ `CategoryId → Categories.Id` (`PRAGMA foreign_key_list(Tasks)`). Столбца `Category` больше нет.
