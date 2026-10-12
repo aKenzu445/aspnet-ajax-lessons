@@ -35,6 +35,9 @@ public class TasksModel : PageModel
     // зад10: сортировка сейчас - "date" (по дате) или "title" (по названию)
     public string SortBy { get; set; } = "date";
 
+    // дз: текст поиска (?search=...)
+    public string? Search { get; set; }
+
     // дз зан5 -> зан8: все категории из таблицы Categories (для фильтра) и какая выбрана (null - все задачи)
     public List<Category> AllCategories { get; set; } = new();
     public int? SelectedCategoryId { get; set; }
@@ -51,24 +54,20 @@ public class TasksModel : PageModel
     [BindProperty]
     public TaskItem NewTask { get; set; } = new();
 
-    // OnGet вызывается автоматически при GET-запросе страницы (/Tasks).
-    // Занятие 5: стал асинхронным (async Task), потому что читает из базы.
-    // ДЗ занятия 5: параметр category приходит из адреса /Tasks?category=Работа (форма фильтра).
-    // Задача 9: номер страницы приходит из адреса /Tasks?pageNumber=2 (по умолчанию 1).
-    // ВАЖНО: параметр НЕ может называться page (как в тексте задания). В Razor Pages "page" —
-    // зарезервированное значение маршрута (путь самой страницы, "/Tasks"). Параметр int page
-    // получал бы "/Tasks" вместо номера и всегда оставался 1, а asp-route-page не добавлял бы
-    // номер в ссылку. Поэтому — pageNumber.
-    // Задача 10: sortBy из адреса (?sortBy=title). Все три параметра работают ВМЕСТЕ:
-    // /Tasks?categoryId=2&sortBy=title&pageNumber=2
-    public async Task OnGetAsync(int? categoryId, string sortBy = "date", int pageNumber = 1)
+    // OnGet срабатывает сам на GET /Tasks, async т.к. база (зан5)
+    // зад9: номер страницы из адреса /Tasks?pageNumber=2 (по умолчанию 1)
+    // ВАЖНО: назвать page (как в задании) НЕЛЬЗЯ - в razor pages "page" занято (это путь самой страницы "/Tasks").
+    // с int page номер всегда был 1, а asp-route-page не добавлял номер в ссылку. поэтому pageNumber
+    // зад10: sortBy (?sortBy=title), дз: search. всё работает вместе:
+    // /Tasks?search=отчёт&categoryId=2&sortBy=title&pageNumber=2
+    public async Task OnGetAsync(int? categoryId, string? search, string sortBy = "date", int pageNumber = 1)
     {
-        await LoadPageDataAsync(categoryId, sortBy, pageNumber);
+        await LoadPageDataAsync(categoryId, search, sortBy, pageNumber);
     }
 
     // грузит всё что надо для страницы. зову из OnGetAsync и из OnPostAsync,
     // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
-    private async Task LoadPageDataAsync(int? categoryId, string sortBy, int pageNumber)
+    private async Task LoadPageDataAsync(int? categoryId, string? search, string sortBy, int pageNumber)
     {
         // зан5 зад10: читаю из базы, тот же источник что у GET /api/tasks
         // зан8 зад6: EF НЕ тянет связанные данные сам - без Include у задачи Category == null, хотя CategoryId есть
@@ -81,6 +80,15 @@ public class TasksModel : PageModel
         {
             query = query.Where(t => t.CategoryId == categoryId);
         }
+        // === дз: поиск по названию ===
+        // Contains в SQL станет LIKE '%текст%'. это просто еще один Where на том же запросе,
+        // поэтому норм работает вместе с фильтром, сортировкой и страницами
+        Search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+        if (Search != null)
+        {
+            query = query.Where(t => t.Title.Contains(Search));
+        }
+
         // зад9: сначала считаю СКОЛЬКО задач подходит под фильтр (до Skip/Take)
         // CountAsync - отдельный SELECT COUNT(*) с тем же WHERE
         TotalCount = await query.CountAsync();
@@ -141,7 +149,7 @@ public class TasksModel : PageModel
 
         if (!ModelState.IsValid)
         {
-            await LoadPageDataAsync(null, "date", 1);
+            await LoadPageDataAsync(null, null, "date", 1);
             return Page();
         }
 

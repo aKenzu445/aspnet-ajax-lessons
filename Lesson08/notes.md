@@ -213,3 +213,24 @@ modelBuilder.Entity<TaskItem>()
        «Отчёт для начальника», «Рабочая задача 1–3» → CategoryId = NULL
 /Stats: «Без категории: 6», итого 16
 ```
+
+## Домашнее задание. Текстовый поиск по названию
+
+- `OnGetAsync(int? categoryId, string? search, string sortBy = "date", int pageNumber = 1)`.
+- Поиск — ещё одно условие `Where` на том же `IQueryable`:
+  ```csharp
+  if (Search != null)
+      query = query.Where(t => t.Title.Contains(Search));   // SQL: Title LIKE '%текст%'
+  ```
+  Стоит **до** подсчёта, сортировки и `Skip/Take`, поэтому сочетается со всем остальным.
+- Поле «Поиск» — в той же GET-форме, что и фильтр по категории. Все ссылки (сортировка, «Назад/Далее») передают `search` дальше (`asp-route-search`).
+
+**Проверка:**
+```
+?search=Задача                                        → 5 задач «Задача для страниц …»
+?search=Задача&categoryId=2                           → те же 5 (все в «Учёбе»)
+?search=Задача&categoryId=2&sortBy=title&pageNumber=2 → пусто: «Страница 2 из 1» (5 задач — одна страница)
+?search=xyz                                           → «По заданным условиям (поиск / категория) задач не найдено.»
+Ссылки: /Tasks?pageNumber=1&categoryId=2&search=…&sortBy=title — все 4 параметра сохраняются.
+```
+**Ограничение SQLite:** `LIKE` без учёта регистра работает только для латиницы. Для кириллицы поиск **чувствителен к регистру** («задача» не найдёт «Задача»). В SQL Server/PostgreSQL это решается настройкой collation.
