@@ -91,3 +91,22 @@ IQueryable<TaskItem> query = _db.Tasks.Include(t => t.Category).AsQueryable();
 `Include` — «жадная загрузка» (eager loading): EF делает **один** SQL-запрос с `JOIN` и заполняет `task.Category` у каждой задачи. После исправления: «Личное», «Работа» у соответствующих задач, независимо от того, что ещё загружено на странице.
 
 **Проблема N+1 (теория 8.4):** если бы вместо `Include` в цикле для каждой задачи делался `FindAsync(task.CategoryId)`, то при 100 задачах было бы **101 запрос** к базе. С `Include` запрос один.
+
+## Задача 7. Фильтр по категории через LINQ
+
+- На `/Tasks` форма `method="get"` с выпадающим списком категорий (из таблицы) и кнопкой «Применить». Выбор попадает в адрес: `/Tasks?categoryId=2`.
+- `OnGetAsync(int? categoryId)` → условная фильтрация:
+  ```csharp
+  var query = _db.Tasks.Include(t => t.Category).AsQueryable();
+  if (categoryId.HasValue)
+      query = query.Where(t => t.CategoryId == categoryId);
+  InitialTasks = await query.ToListAsync();
+  ```
+  `AsQueryable()` — запрос пока **не выполнен** (отложенное выполнение), к нему можно по условию добавлять `Where`. В базу он уходит только на `ToListAsync()` одним SQL-запросом.
+
+**Проверка:**
+```
+/Tasks?categoryId=2 → только «Диплом», «Конспект» (категория «Учёба»), в фильтре выбрано «Учёба»
+/Tasks              → все 6 задач
+```
+(Фильтр по строке существовал ещё с ДЗ занятия 5. Здесь он переведён на `CategoryId` и `Include`.)
