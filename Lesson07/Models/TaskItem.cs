@@ -18,6 +18,8 @@ public class TaskItem
     [Required(ErrorMessage = "Название обязательно")]
     // зан7 зад4: минимум 3 символа
     [StringLength(100, MinimumLength = 3, ErrorMessage = "От 3 до 100 символов")]
+    // зан7 зад5: мой атрибут (папка Validation) - нельзя слово "тест"
+    [NoForbiddenWords]
     public string Title { get; set; } = "";     // текст задачи (по умолчанию пусто)
     public bool IsDone { get; set; }            // сделана или нет (по умолчанию false)
 

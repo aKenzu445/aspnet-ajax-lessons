@@ -52,4 +52,12 @@
 @section Scripts {
     @* зан7 зад2: валидация в браузере (unobtrusive) для формы редактирования *@
     <partial name="_ValidationScriptsPartial" />
+
+    @* зан7 зад6: проверка слова "тест" руками (у [NoForbiddenWords] нет js адаптера) *@
+    <script src="~/js/title-checks.js"></script>
+    <script>
+        attachForbiddenWordsCheck(
+            document.getElementById("Task_Title").form,
+            document.getElementById("Task_Title"));
+    </script>
 }

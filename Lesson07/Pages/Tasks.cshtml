@@ -116,6 +116,8 @@
 @section Scripts {
     @* зан7 зад2: валидация в браузере (unobtrusive) для обычной формы добавления *@
     <partial name="_ValidationScriptsPartial" />
+    @* зан7 зад6: проверки руками, которых нет в unobtrusive *@
+    <script src="~/js/title-checks.js"></script>
 
     <script>
         // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
@@ -293,6 +295,11 @@
                 `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
         });
 
+
+        // зан7 зад6: проверка слова "тест" в обычной форме добавления
+        attachForbiddenWordsCheck(
+            document.getElementById("NewTask_Title").form,
+            document.getElementById("NewTask_Title"));
 
         // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
         // ajax тока после добавления/удаления/галочки
