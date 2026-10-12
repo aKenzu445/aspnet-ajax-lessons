@@ -60,11 +60,9 @@ app.Use(async (context, next) =>
     Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ← {context.Response.StatusCode} ({stopwatch.ElapsedMilliseconds} ms)");
 });
 
-// === зан1 зад4: статические файлы из wwwroot ===
-// UseDefaultFiles - на "/" отдает index.html
-// UseStaticFiles - отдает файлы из wwwroot как есть (html, css, js)
-// без него /index.html был бы 404, сервак про wwwroot не знал бы
-app.UseDefaultFiles();
+// === зан1 зад4: статика из wwwroot ===
+// UseStaticFiles отдает css/js как есть, без него /css/site.css = 404
+// зан3 зад2: UseDefaultFiles выкинул - главную "/" теперь рисует razor (Pages/Index.cshtml), старый index.html удалил
 app.UseStaticFiles();
 
 // === зан2 зад10: режим техработ ===
