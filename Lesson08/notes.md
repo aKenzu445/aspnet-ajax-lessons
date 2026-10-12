@@ -160,3 +160,25 @@ InitialTasks = await query
 | `?categoryId=2&pageNumber=2` | 3 из 8 отфильтрованных | ← `?pageNumber=1&categoryId=2` |
 
 **Обновление списка после AJAX-изменений.** Раньше JS после добавления/удаления запрашивал `GET /api/tasks` и рисовал строки сам. Это сбросило бы страницу и сортировку. Теперь JS делает `fetch(location.href)` (ту же страницу с теми же параметрами), разбирает ответ через `DOMParser` и заменяет только блок `#taskListBlock`. Проверено: на 2-й странице добавление и удаление через AJAX обновляют список и счётчик («задач: 14» → «задач: 13»), номер страницы остаётся 2. Бонус: разметка строки теперь только в partial `_TaskItem.cshtml`, JS-копия (`taskToHtml`) больше не нужна.
+
+## Задача 10. Сортировка вместе с фильтром и пагинацией
+
+- `OnGetAsync(int? categoryId, string sortBy = "date", int pageNumber = 1)`.
+- Сортировка применяется **после `Where` и до `Skip/Take`**:
+  ```csharp
+  IOrderedQueryable<TaskItem> sorted = SortBy == "title"
+      ? query.OrderBy(t => t.Title)                  // по названию
+      : query.OrderByDescending(t => t.CreatedAt);   // по дате, новые сверху
+  sorted = sorted.ThenBy(t => t.Id);                 // однозначный порядок при равных значениях
+  ```
+  `ThenBy(t => t.Id)` добавлен сверх задания. Если у двух задач одинаковое название или дата, без второго ключа база вправе отдавать их в разном порядке, и при листании задача могла бы «переехать» на другую страницу или показаться дважды.
+- Переключатель «По дате / По названию» — ссылки с `asp-route-categoryId`, `asp-route-sortBy`, `asp-route-pageNumber`. Пагинация передаёт `sortBy` дальше, форма фильтра хранит `sortBy` в скрытом поле.
+
+**Проверка (8 задач категории «Учёба»):**
+```
+?categoryId=2&sortBy=title&pageNumber=1 → Диплом, Задача для страниц 1, 3, 4, 5   (стр. 1 из 2)
+?categoryId=2&sortBy=title&pageNumber=2 → Задача для страниц 6, Конспект          (стр. 2 из 2)
+?categoryId=2&sortBy=date&pageNumber=2  → Конспект, Диплом (самые старые)        (стр. 2 из 2)
+Ссылки на странице: …?pageNumber=1&categoryId=2&sortBy=title, …?categoryId=2&sortBy=date&pageNumber=2
+```
+Все три параметра работают одновременно и не сбрасывают друг друга.

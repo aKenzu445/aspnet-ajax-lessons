@@ -47,8 +47,20 @@
                     <option value="@c.Id" selected="@(c.Id == Model.SelectedCategoryId)">@c.Name</option>
                 }
             </select>
+            @* Задача 10: текущая сортировка сохраняется при смене фильтра *@
+            <input type="hidden" name="sortBy" value="@Model.SortBy" />
             <button type="submit">Применить</button>
         </form>
+
+        @* === зан8 зад10: переключалка сортировки ===
+           ссылки не теряют категорию и номер страницы: /Tasks?categoryId=2&sortBy=title&pageNumber=2 *@
+        <div class="sort-links">
+            Сортировка:
+            <a asp-page="/Tasks" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-sortBy="date"
+               asp-route-pageNumber="@Model.CurrentPage" class="@(Model.SortBy == "date" ? "active" : "")">По дате</a>
+            <a asp-page="/Tasks" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-sortBy="title"
+               asp-route-pageNumber="@Model.CurrentPage" class="@(Model.SortBy == "title" ? "active" : "")">По названию</a>
+        </div>
 
         <button id="loadTasksBtn">Обновить список</button>
 
@@ -84,7 +96,7 @@
                 <nav class="pager">
                     @if (Model.CurrentPage > 1)
                     {
-                        <a asp-page="/Tasks" asp-route-pageNumber="@Math.Min(Model.CurrentPage - 1, Model.TotalPages)" asp-route-categoryId="@Model.SelectedCategoryId">&larr; Назад</a>
+                        <a asp-page="/Tasks" asp-route-pageNumber="@Math.Min(Model.CurrentPage - 1, Model.TotalPages)" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-sortBy="@Model.SortBy">&larr; Назад</a>
                     }
                     else
                     {
@@ -95,7 +107,7 @@
 
                     @if (Model.CurrentPage < Model.TotalPages)
                     {
-                        <a asp-page="/Tasks" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-categoryId="@Model.SelectedCategoryId">Далее &rarr;</a>
+                        <a asp-page="/Tasks" asp-route-pageNumber="@(Model.CurrentPage + 1)" asp-route-categoryId="@Model.SelectedCategoryId" asp-route-sortBy="@Model.SortBy">Далее &rarr;</a>
                     }
                     else
                     {

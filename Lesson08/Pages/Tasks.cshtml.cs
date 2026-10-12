@@ -32,6 +32,9 @@ public class TasksModel : PageModel
     public int TotalPages { get; set; }         // сколько всего страниц
     public int TotalCount { get; set; }         // сколько задач подходит под фильтр
 
+    // зад10: сортировка сейчас - "date" (по дате) или "title" (по названию)
+    public string SortBy { get; set; } = "date";
+
     // дз зан5 -> зан8: все категории из таблицы Categories (для фильтра) и какая выбрана (null - все задачи)
     public List<Category> AllCategories { get; set; } = new();
     public int? SelectedCategoryId { get; set; }
@@ -56,14 +59,16 @@ public class TasksModel : PageModel
     // зарезервированное значение маршрута (путь самой страницы, "/Tasks"). Параметр int page
     // получал бы "/Tasks" вместо номера и всегда оставался 1, а asp-route-page не добавлял бы
     // номер в ссылку. Поэтому — pageNumber.
-    public async Task OnGetAsync(int? categoryId, int pageNumber = 1)
+    // Задача 10: sortBy из адреса (?sortBy=title). Все три параметра работают ВМЕСТЕ:
+    // /Tasks?categoryId=2&sortBy=title&pageNumber=2
+    public async Task OnGetAsync(int? categoryId, string sortBy = "date", int pageNumber = 1)
     {
-        await LoadPageDataAsync(categoryId, pageNumber);
+        await LoadPageDataAsync(categoryId, sortBy, pageNumber);
     }
 
     // грузит всё что надо для страницы. зову из OnGetAsync и из OnPostAsync,
     // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
-    private async Task LoadPageDataAsync(int? categoryId, int pageNumber)
+    private async Task LoadPageDataAsync(int? categoryId, string sortBy, int pageNumber)
     {
         // зан5 зад10: читаю из базы, тот же источник что у GET /api/tasks
         // зан8 зад6: EF НЕ тянет связанные данные сам - без Include у задачи Category == null, хотя CategoryId есть
@@ -83,10 +88,18 @@ public class TasksModel : PageModel
         TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
         CurrentPage = pageNumber < 1 ? 1 : pageNumber;   // защита от 0 и минусов
 
-        // Порядок LINQ важен: Where (фильтр, выше) → OrderBy (сортировка) → Skip/Take (страница).
-        // Иначе "страница" была бы из неотсортированных или нефильтрованных данных.
-        InitialTasks = await query
-            .OrderByDescending(t => t.CreatedAt)          // пока сортировка по дате создания (новые сверху)
+        // порядок LINQ важен: Where (фильтр, выше) -> OrderBy (сортировка) -> Skip/Take (страница)
+        // иначе страница была бы из неотсортированных или неотфильтрованных данных
+        // === зад10: сортировка ПОСЛЕ Where, но ДО Skip/Take ===
+        SortBy = sortBy == "title" ? "title" : "date";   // левое значение -> по дате
+        IOrderedQueryable<TaskItem> sorted = SortBy == "title"
+            ? query.OrderBy(t => t.Title)                   // по названию, А -> Я
+            : query.OrderByDescending(t => t.CreatedAt);    // по дате, новые сверху
+        // ThenBy(Id) - если название/дата одинаковые, порядок всё равно четкий,
+        // а то задача могла бы прыгать между страницами
+        sorted = sorted.ThenBy(t => t.Id);
+
+        InitialTasks = await sorted
             .Skip((CurrentPage - 1) * PageSize)          // пропустить задачи прошлых страниц
             .Take(PageSize)                              // взять не больше 5
             .ToListAsync();                              // <- тока тут запрос уходит в базу
@@ -128,7 +141,7 @@ public class TasksModel : PageModel
 
         if (!ModelState.IsValid)
         {
-            await LoadPageDataAsync(null, 1);
+            await LoadPageDataAsync(null, "date", 1);
             return Page();
         }
 
