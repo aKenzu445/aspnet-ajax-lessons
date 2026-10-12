@@ -2,12 +2,14 @@ namespace Lesson1.WebServer.Middleware;
 
 // === дз зан2: ограничение частоты запросов (rate limiting) ===
 // если с одного ip больше MaxRequests запросов за WindowSeconds сек -> 429
+// (цифры в appsettings.json, секция RateLimiting)
 // храню в памяти: словарь ip -> список времени запросов, без всяких библиотек
 // считаю тока /api/*, статика отдается раньше, а то одна загрузка страницы съела бы весь лимит
 public class RateLimitingMiddleware
 {
-    private const int MaxRequests = 5;        // не больше 5 запросов...
-    private const int WindowSeconds = 10;     // ...за 10 сек
+    // зан3: лимиты беру из appsettings.json (RateLimiting), а не хардкод. если нету - 5 за 10 сек
+    private readonly int MaxRequests;
+    private readonly int WindowSeconds;
 
     // static - один словарь на все запросы. ключ - ip, значение - когда были его запросы
     private static readonly Dictionary<string, List<DateTime>> RequestsByIp = new();
@@ -17,7 +19,13 @@ public class RateLimitingMiddleware
 
     private readonly RequestDelegate _next;
 
-    public RateLimitingMiddleware(RequestDelegate next) => _next = next;
+    // IConfiguration - доступ к appsettings.json, asp.net сам кидает его в конструктор (DI)
+    public RateLimitingMiddleware(RequestDelegate next, IConfiguration configuration)
+    {
+        _next = next;
+        MaxRequests = configuration.GetValue("RateLimiting:MaxRequests", 5);
+        WindowSeconds = configuration.GetValue("RateLimiting:WindowSeconds", 10);
+    }
 
     public async Task InvokeAsync(HttpContext context)
     {

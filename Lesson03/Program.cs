@@ -82,7 +82,7 @@ app.Use(async (context, next) =>
 });
 
 // === дз зан2: ограничение запросов ===
-// больше 5 запросов к /api за 10 сек с одного ip -> 429
+// много запросов к /api с одного ip -> 429. лимит в appsettings.json (RateLimiting), в зан2 было 5 за 10 сек
 app.UseMiddleware<RateLimitingMiddleware>();
 
 // маршрутизация: решает какой endpoint подходит под адрес
