@@ -1,0 +1,28 @@
+@* зан3 зад3: общий каркас (layout) для всех страниц
+   шапка, меню и футер написаны ОДИН раз тут, страница вставляется на место RenderBody() *@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    @* ViewData["Title"] - заголовок вкладки, каждая страница задает свой *@
+    <title>@ViewData["Title"] — Task Manager</title>
+    <link rel="stylesheet" href="~/css/site.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-title">Task Manager</div>
+        <nav class="site-nav">
+            <a href="/">Главная</a>
+        </nav>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        &copy; @DateTime.Now.Year Task Manager
+    </footer>
+</body>
+</html>

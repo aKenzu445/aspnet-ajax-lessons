@@ -1,0 +1,6 @@
+@* зан3 зад3: layout по умолчанию для ВСЕХ страниц в Pages и подпапках
+   лежит в Pages/, а не в Pages/Shared/: _ViewStart действует на свою папку и ниже,
+   из Shared он бы работал тока для файлов внутри Shared. "_Layout" ищется в Pages/Shared/_Layout.cshtml *@
+@{
+    Layout = "_Layout";
+}

@@ -12,6 +12,53 @@ main {
     margin: 0 auto;
 }
 
+/* --- шапка, меню и футер из layout (зан3) --- */
+.site-header {
+    max-width: 760px;
+    margin: 0 auto 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.site-title {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.site-nav a {
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: #2457a6;
+    text-decoration: none;
+}
+
+.site-nav a:hover {
+    background: #e6ecf5;
+}
+
+/* зад8: активный пункт меню */
+.site-nav a.active {
+    background: #2457a6;
+    color: #fff;
+}
+
+.site-footer {
+    max-width: 760px;
+    margin: 24px auto 0;
+    color: #888;
+    font-size: 13px;
+    text-align: center;
+}
+
 section.card {
     background: #fff;
     border: 1px solid #dde1e6;

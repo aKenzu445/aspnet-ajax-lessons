@@ -1,17 +1,8 @@
 @page
 @* зан3 зад2: главную перенес из wwwroot/index.html в razor
    html и js перенес БЕЗ изменений - браузеру пофиг, статический это файл или razor его собрал *@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Task Manager</title>
-    <link rel="stylesheet" href="/css/site.css">
-</head>
-<body>
-<main>
-    <h1>Task Manager</h1>
+@* зад3: <html>, <head>, шапка, меню и футер теперь в общем Pages/Shared/_Layout.cshtml
+   тут тока содержимое страницы, оно встанет на место RenderBody() *@
 
     <!-- зад4: первый ajax запрос -->
     <section class="card">
@@ -65,7 +56,6 @@
         <button id="findTaskBtn">Найти задачу</button>
         <div id="findTaskResult" class="result"></div>
     </section>
-</main>
 
 <script>
     // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
@@ -280,5 +270,3 @@
     loadServerInfo();
     loadTasks();
 </script>
-</body>
-</html>
