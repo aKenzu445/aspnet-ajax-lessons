@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;   // атрибуты [Display], [Required] и тд (зан6)
+
 namespace Lesson1.WebServer.Models;
 
 // зан1 зад8: одна задача из списка to-do
@@ -7,6 +9,8 @@ public class TaskItem
 {
     // по соглашению EF свойство Id - ПЕРВИЧНЫЙ КЛЮЧ, база сама дает 1, 2, 3... (автоинкремент)
     public int Id { get; set; }                 // номер задачи
+    // Занятие 6, задача 4: [Display] — человеческое имя поля для <label asp-for="...">
+    [Display(Name = "Название")]
     public string Title { get; set; } = "";     // текст задачи (по умолчанию пусто)
     public bool IsDone { get; set; }            // сделана или нет (по умолчанию false)
 

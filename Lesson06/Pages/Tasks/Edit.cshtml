@@ -9,7 +9,28 @@
     ViewData["Title"] = $"Редактирование задачи №{RouteData.Values["id"]}";
 }
 
-@* Задача 3. Проверка, что данные задачи подгружаются из базы (пока просто текстом) *@
+@* зад4: форма редактирования на тег-хелперах
+   asp-for="Task.Title" сам делает name="Task.Title", id="Task_Title" и value="текущее значение"
+   если переименовать свойство а разметку забыть - не скомпилится (с обычным name="title" никто бы не заметил) *@
 <section class="card">
-    <p>@Model.Task.Title / @Model.Task.IsDone</p>
+    <form method="post">
+        @* скрытое поле с Id - так сервак на POST поймет КАКУЮ задачу редачить *@
+        <input type="hidden" asp-for="Task.Id" />
+
+        <div class="form-row">
+            @* label asp-for берет имя поля из [Display(Name = "Название")] в TaskItem *@
+            <label asp-for="Task.Title"></label>
+            <input asp-for="Task.Title" />
+        </div>
+
+        <div class="form-row">
+            <label>
+                @* для bool asp-for делает checkbox и ставит checked если IsDone == true *@
+                <input asp-for="Task.IsDone" type="checkbox" /> Выполнено
+            </label>
+        </div>
+
+        <button type="submit">Сохранить</button>
+        <a asp-page="/Tasks">Отмена</a>
+    </form>
 </section>

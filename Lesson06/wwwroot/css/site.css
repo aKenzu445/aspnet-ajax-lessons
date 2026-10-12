@@ -222,3 +222,21 @@ h1 {
     gap: 8px;
     margin-bottom: 12px;
 }
+
+/* --- формы редактирования (зан6) --- */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    min-width: 90px;
+}
+
+.form-row input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+}
