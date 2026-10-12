@@ -233,49 +233,82 @@
                 return;   // fetch не делаю - запрос не уходит
             }
 
-            const response = await fetch("/api/tasks", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                body: JSON.stringify({
-                    title: input.value,
-                    // зан8: номер категории (Id) или null если "Без категории"
-                    categoryId: document.getElementById("newTaskCategory").value ? Number(document.getElementById("newTaskCategory").value) : null,
-                    // дз зан7: "2026-10-20" или null если дату не выбрали
-                    dueDate: document.getElementById("newTaskDueDate").value || null
-                })
-            });
-            const data = await response.json();
+            // ===== Занятие 9, задача 9. Индикатор загрузки =====
+            // На время запроса кнопка заблокирована и показывает "Сохранение...":
+            // пользователь видит, что "что-то происходит", и не может нажать второй раз
+            // (иначе на медленном интернете получились бы две одинаковые задачи).
+            const button = document.getElementById("addTaskBtn");
+            button.disabled = true;
+            button.textContent = "Сохранение...";
 
-            // ВТОРОЙ рубеж — сервер. Его проверку НЕ удаляем: клиентскую можно обойти
-            // (Postman, отключённый JS) или в ней может не оказаться какого-то серверного правила.
-            // Занятие 7, задача 7: ошибки валидации приходили списком { "errors": [...] };
-            // занятие 9, задача 6: теперь ВСЕ ошибки в одном формате { "error": { "message", "code" } }
-            if (!response.ok) {
-                showTaskMessage(data.error.message, true);   // занятие 9: единый формат { error: { message, code } }
-                return;
+            try {
+                const response = await fetch("/api/tasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                    body: JSON.stringify({
+                        title: input.value,
+                        // зан8: номер категории (Id) или null если "Без категории"
+                        categoryId: document.getElementById("newTaskCategory").value ? Number(document.getElementById("newTaskCategory").value) : null,
+                        // дз зан7: "2026-10-20" или null если дату не выбрали
+                        dueDate: document.getElementById("newTaskDueDate").value || null
+                    })
+                });
+                const data = await response.json();
+
+                // ВТОРОЙ рубеж — сервер. Его проверку НЕ удаляем: клиентскую можно обойти
+                // (Postman, отключённый JS) или в ней может не оказаться какого-то серверного правила.
+                // Занятие 9, задача 6: все ошибки в одном формате { "error": { "message", "code" } }
+                if (!response.ok) {
+                    showTaskMessage(data.error.message, true);
+                    return;
+                }
+
+                input.value = "";
+                showTaskMessage(`Задача №${data.id} добавлена`, false);
+                await loadTasks();                    // обновляю список без перезагрузки
+            } catch (err) {
+                // Ошибка СЕТИ (сервер недоступен, нет интернета) — fetch выбрасывает исключение
+                showTaskMessage(`Ошибка сети: ${err.message}`, true);
+            } finally {
+                // finally выполняется ВСЕГДА — и после успеха, и после ошибки, и после return.
+                // Поэтому кнопка гарантированно разблокируется.
+                button.disabled = false;
+                button.textContent = "Добавить задачу";
             }
-
-            input.value = "";
-            showTaskMessage(`Задача №${data.id} добавлена`, false);
-            await loadTasks();                        // обновляю список без перезагрузки
         });
 
-        // === зад10: удаление ===
-        // вызывается кнопкой Удалить (onclick в строке)
-        async function deleteTask(id) {
-            const response = await fetch(`/api/tasks/${id}`, {
-                method: "DELETE",
-                headers: { "X-Api-Key": API_KEY }
-            });
-            // Занятие 9, задача 7: при успехе сервер отвечает 204 No Content — тела нет,
-            // поэтому response.json() вызываем ТОЛЬКО для ошибки
-            if (!response.ok) {                       // 404 - задачи уже нет
-                const data = await response.json();
-                showTaskMessage(data.error.message, true);
-            } else {
-                showTaskMessage(`Задача №${id} удалена`, false);
+        // ===== Задача 10. Удаление задачи =====
+        // Вызывается кнопкой "Удалить" (onclick в разметке строки списка)
+        // Занятие 9, задача 9: button — нажатая кнопка "Удалить" (в разметке передаётся this),
+        // она блокируется на время запроса.
+        async function deleteTask(id, button) {
+            if (button) {
+                button.disabled = true;
+                button.textContent = "Удаление...";
             }
-            await loadTasks();
+
+            try {
+                const response = await fetch(`/api/tasks/${id}`, {
+                    method: "DELETE",
+                    headers: { "X-Api-Key": API_KEY }
+                });
+                // Занятие 9, задача 7: при успехе сервер отвечает 204 No Content — тела нет,
+                // поэтому response.json() вызываем ТОЛЬКО для ошибки
+                if (!response.ok) {                   // 404 - задачи уже нет
+                    const data = await response.json();
+                    showTaskMessage(data.error.message, true);
+                } else {
+                    showTaskMessage(`Задача №${id} удалена`, false);
+                }
+                await loadTasks();                    // список перерисуется — кнопка исчезнет вместе со строкой
+            } catch (err) {
+                showTaskMessage(`Ошибка сети: ${err.message}`, true);
+            } finally {
+                if (button) {                         // если строка осталась (ошибка) — разблокируем
+                    button.disabled = false;
+                    button.textContent = "Удалить";
+                }
+            }
         }
 
         // === дз: чекбокс выполнено ===
@@ -285,30 +318,40 @@
             const isDone = checkbox.checked;
             const li = checkbox.closest("li");     // строка где стоит галка
 
-            // Занятие 9, задача 4: PUT принимает UpdateTaskDto — полный набор полей.
-            // Название и категорию берём из data-атрибутов строки (их вывел partial _TaskItem).
-            const response = await fetch(`/api/tasks/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                body: JSON.stringify({
-                    title: li.dataset.title,
-                    isDone: isDone,
-                    categoryId: li.dataset.categoryId ? Number(li.dataset.categoryId) : null
-                })
-            });
+            // Занятие 9, задача 9: на время запроса галочку нельзя переключить ещё раз
+            checkbox.disabled = true;
 
-            if (!response.ok) {
-                // ошибка (типа 404 - задачу уже удалили): возвращаю галку назад
-                const data = await response.json().catch(() => null);
-                checkbox.checked = !isDone;
-                showTaskMessage(data?.error?.message ?? `Ошибка ${response.status}`, true);
-                return;
+            try {
+                // Занятие 9, задача 4: PUT принимает UpdateTaskDto — полный набор полей.
+                // Название и категорию берём из data-атрибутов строки (их вывел partial _TaskItem).
+                const response = await fetch(`/api/tasks/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                    body: JSON.stringify({
+                        title: li.dataset.title,
+                        isDone: isDone,
+                        categoryId: li.dataset.categoryId ? Number(li.dataset.categoryId) : null
+                    })
+                });
+
+                if (!response.ok) {
+                    // ошибка (типа 404 - задачу уже удалили): возвращаю галку назад
+                    const data = await response.json().catch(() => null);
+                    checkbox.checked = !isDone;
+                    showTaskMessage(data?.error?.message ?? `Ошибка ${response.status}`, true);
+                    return;
+                }
+
+                // ок: сразу меняю вид строки - класс "done" зачеркивает текст (site.css)
+                // classList.toggle(имя, условие) добавляет класс если true, иначе убирает
+                const task = await response.json();
+                li.classList.toggle("done", task.isDone);
+            } catch (err) {
+                checkbox.checked = !isDone;           // ошибка сети — откатываем галочку
+                showTaskMessage(`Ошибка сети: ${err.message}`, true);
+            } finally {
+                checkbox.disabled = false;            // разблокировать в любом случае
             }
-
-            // ок: сразу меняю вид строки - класс "done" зачеркивает текст (site.css)
-            // classList.toggle(имя, условие) добавляет класс если true, иначе убирает
-            const task = await response.json();
-            li.classList.toggle("done", task.isDone);
         }
 
         // === зан2 зад4: найти задачу по id ===

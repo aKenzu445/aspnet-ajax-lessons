@@ -30,7 +30,8 @@
     }
     @* зан6 зад6: ссылка на редактирование. asp-page + asp-route-id сами делают href="/Tasks/Edit/3" *@
     <a asp-page="/Tasks/Edit" asp-route-id="@Model.Id" class="button-link">Редактировать</a>
-    <button onclick="deleteTask(@Model.Id)">Удалить</button>
+    @* this - сама кнопка, зан9 зад9 блочит её пока идет запрос *@
+    <button onclick="deleteTask(@Model.Id, this)">Удалить</button>
     @* зан4 зад5: обычная кнопка удаления (работает без js)
        asp-page-handler="Delete" -> вызовется OnPostDelete, asp-route-id -> параметр id
        тег-хелпер сделает action="/Tasks?id=3&handler=Delete" и добавит токен *@

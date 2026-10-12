@@ -277,7 +277,8 @@ tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 // зан9 зад3: принимаю CreateTaskDto (там нет Id/IsDone/CreatedAt), отдаю TaskDto
 tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
 {
-    // зан5 зад8: создаю БЕЗ Id - база сама даст следующий номер
+    // зан9 зад9: для проверки индикатора тут ВРЕМЕННО стояло await Task.Delay(2000); (типа медленный сервак), убрал
+    // зан5 зад8: создаю БЕЗ Id - база сама даст номер
     var created = new TaskItem
     {
         Title = request.Title?.Trim() ?? "",   // Trim - убрать пробелы по краям, null -> ""
