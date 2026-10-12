@@ -39,10 +39,21 @@
             </ul>
         }
 
-        <!-- зад9: добавить задачу -->
+        <!-- зад9: добавить через ajax (без перезагрузки) -->
+        <h3>Добавить задачу (AJAX)</h3>
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
+
+        @* зан4 зад3: обычная html форма, работает даже без js
+           method="post" -> браузер шлет POST на этот же адрес (/Tasks) -> срабатывает OnPost
+           страница ПОЛНОСТЬЮ перезагружается (редирект), в отличие от ajax формы выше
+           тег-хелпер form сам добавляет скрытый __RequestVerificationToken (защита от CSRF) *@
+        <h3>Добавить задачу (обычная форма)</h3>
+        <form method="post">
+            <input name="title" type="text" placeholder="Новая задача">
+            <button type="submit">Добавить (с перезагрузкой)</button>
+        </form>
 
         <!-- зан2 зад4: найти задачу по id -->
         <h3>Найти задачу по номеру</h3>

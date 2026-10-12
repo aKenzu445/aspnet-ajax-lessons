@@ -1,5 +1,6 @@
 using Lesson1.WebServer.Data;
 using Lesson1.WebServer.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Lesson1.WebServer.Pages;
@@ -24,5 +25,18 @@ public class TasksModel : PageModel
         // словарём ViewData: ViewBag.PageDescription == ViewData["PageDescription"].
         // Разница только в синтаксисе доступа.
         ViewData["PageDescription"] = "Здесь вы можете управлять своими задачами";
+    }
+
+    // === зан4 зад3: обработчик обычной формы добавления ===
+    // OnPost срабатывает на POST /Tasks (submit в <form method="post">)
+    // title берется из поля формы с name="title"
+    // IActionResult - что вернуть: страницу, редирект, ошибку и тд
+    public IActionResult OnPost(string title)
+    {
+        TaskStorage.Add(title);
+
+        // Post-Redirect-Get (PRG): после POST отвечаю редиректом (302) на GET /Tasks
+        // браузер сам перезагрузит страницу, и если нажать F5 - будет безопасный GET, а не повторная отправка формы (дубля не будет)
+        return RedirectToPage();
     }
 }
