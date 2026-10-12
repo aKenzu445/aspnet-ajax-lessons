@@ -1,4 +1,5 @@
 @page "{id:int}"
+@model Lesson1.WebServer.Pages.Tasks.EditModel
 @* зан6 зад2: страница редактирования одной задачи
    page "{id:int}" - id становится частью адреса: /Tasks/Edit/1, /Tasks/Edit/2 ...
    (путь /Tasks/Edit из папки Pages/Tasks и файла Edit.cshtml)
@@ -7,3 +8,8 @@
     // RouteData.Values["id"] - id из адреса
     ViewData["Title"] = $"Редактирование задачи №{RouteData.Values["id"]}";
 }
+
+@* Задача 3. Проверка, что данные задачи подгружаются из базы (пока просто текстом) *@
+<section class="card">
+    <p>@Model.Task.Title / @Model.Task.IsDone</p>
+</section>
