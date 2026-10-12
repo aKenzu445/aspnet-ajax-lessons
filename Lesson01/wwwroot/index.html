@@ -50,6 +50,11 @@
         <h2>Задачи</h2>
         <button id="loadTasksBtn">Показать задачи</button>
         <ul id="taskList" class="task-list"></ul>
+
+        <!-- зад9: добавить задачу -->
+        <input id="newTaskTitle" type="text" placeholder="Новая задача">
+        <button id="addTaskBtn">Добавить задачу</button>
+        <div id="taskMessage"></div>
     </section>
 </main>
 
@@ -153,6 +158,36 @@
     }
 
     document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
+
+    // сообщение под списком (ошибка красным)
+    function showTaskMessage(text, isError) {
+        document.getElementById("taskMessage").innerHTML =
+            text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
+    }
+
+    // === зад9: добавить задачу ===
+    // после POST заново тяну весь список. почему: правда тока на сервере,
+    // так на экране точно то что сохранено (с норм Id) + видно чужие задачи
+    // минус - лишний запрос, но для мелкого списка пофиг
+    document.getElementById("addTaskBtn").addEventListener("click", async () => {
+        const input = document.getElementById("newTaskTitle");
+
+        const response = await fetch("/api/tasks", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: input.value })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {                       // 400 - пустое название
+            showTaskMessage(data.error, true);
+            return;
+        }
+
+        input.value = "";
+        showTaskMessage(`Задача №${data.id} добавлена`, false);
+        await loadTasks();                        // обновляю список без перезагрузки
+    });
 
     // при открытии сразу показываю инфу о серваке и задачи
     loadServerInfo();

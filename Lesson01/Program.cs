@@ -84,6 +84,22 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 // GET /api/tasks -> массив задач в json
 app.MapGet("/api/tasks", () => TaskStorage.GetAll());
 
+// === зад9: добавить задачу (POST) ===
+// POST /api/tasks с { "title": "Купить хлеб" } -> 201 и созданная задача
+app.MapPost("/api/tasks", (CreateTaskRequest request) =>
+{
+    // IsNullOrWhiteSpace - true если null, "" или одни пробелы
+    if (string.IsNullOrWhiteSpace(request.Title))
+    {
+        return Results.BadRequest(new { Error = "Название задачи не может быть пустым" }); // 400
+    }
+
+    TaskItem created = TaskStorage.Add(request.Title.Trim());   // Trim - убрать пробелы по краям
+
+    // 201 Created - создано, в ответе сама задача уже с Id
+    return Results.Json(created, statusCode: StatusCodes.Status201Created);
+});
+
 // запуск сервака: начинает слушать порт и обрабатывать запросы
 app.Run();
 
@@ -93,3 +109,6 @@ app.Run();
 
 // зад6: тело POST /api/echo. string? - строка которая может быть null, record - короткий класс для данных
 public record EchoRequest(string? Text);
+
+// зад9: тело POST /api/tasks
+public record CreateTaskRequest(string? Title);
