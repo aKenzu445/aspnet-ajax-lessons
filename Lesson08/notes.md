@@ -110,3 +110,24 @@ IQueryable<TaskItem> query = _db.Tasks.Include(t => t.Category).AsQueryable();
 /Tasks              → все 6 задач
 ```
 (Фильтр по строке существовал ещё с ДЗ занятия 5. Здесь он переведён на `CategoryId` и `Include`.)
+
+## Задача 8. Группировка и агрегация для статистики
+
+`StatsModel.OnGetAsync`:
+```csharp
+var byCategory = await _db.Tasks
+    .GroupBy(t => t.Category!.Name)                                   // SQL: GROUP BY Categories.Name
+    .Select(g => new { CategoryName = g.Key, Count = g.Count() })    // SQL: COUNT(*)
+    .OrderByDescending(x => x.Count)
+    .ToListAsync();
+```
+Для задач без категории ключ группы — `null`, на странице «Без категории».
+
+**Проверка:**
+```
+Всего: 7
+Учёба: 2, Личное: 2, Спорт: 1, Работа: 1, Без категории: 1
+Итого по категориям: 7   ← совпадает с «Всего» (занятие 4)
+```
+
+**Ошибка по ходу:** сначала проекция была сразу в `record CategoryStat(...)`, а затем `.OrderByDescending(x => x.Count)`. EF Core выдал `InvalidOperationException: The LINQ expression ... could not be translated`: он не умеет перевести в SQL сортировку по свойству объекта, созданного конструктором. Исправление: проекция в **анонимный объект** (как в задании), сортировка и `ToListAsync()` в базе, а преобразование в `CategoryStat` — уже **в памяти**. Важный вывод: не любое C#-выражение в LINQ-запросе к базе EF может превратить в SQL.

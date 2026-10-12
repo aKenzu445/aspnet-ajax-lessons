@@ -23,6 +23,17 @@
         <tr><td>Не выполнено:</td><td>@Model.UndoneCount</td></tr>
     </table>
 
+    @* зан8 зад8: разбивка по категориям (GroupBy в StatsModel) *@
+    <h3>По категориям</h3>
+    <table class="info-table">
+        @foreach (var row in Model.ByCategory)
+        {
+            <tr><td>@row.CategoryName:</td><td>@row.Count</td></tr>
+        }
+        @* проверка: сумма по категориям должна совпасть с общим числом *@
+        <tr><td>Итого по категориям:</td><td>@Model.ByCategory.Sum(x => x.Count)</td></tr>
+    </table>
+
     @* дз: обычная форма -> POST /Stats -> OnPost() -> редирект -> GET /Stats *@
     <form method="post">
         <button type="submit">Обновить статистику</button>
