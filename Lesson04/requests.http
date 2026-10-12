@@ -1,29 +1,25 @@
-### Проверки занятия 3. Запусти проект занятия 3 (▶).
+### Проверки занятия 4. Запусти проект занятия 4 (▶). Адрес: http://localhost:5104
+### Формы (задачи 3–5, 9, ДЗ) удобнее проверять в браузере: им нужен анти-подделочный
+### токен, который Razor вставляет в каждую <form method="post">.
 
 @host = http://localhost:5104
 @key = lesson2-secret
 
-### Задача 1: Razor-страница без layout
-GET {{host}}/Test
-
-### Задача 2–3: главная (Razor + layout)
-GET {{host}}/
-
-### Задачи 4–6: список задач приходит в HTML сразу (SSR)
+### Задача 1, 10: заголовок вкладки и описание (смотри <title> и page-description)
 GET {{host}}/Tasks
 
-### Задача 9: ошибка API → JSON 500
-GET {{host}}/api/crash-test
+### Задачи 6–7: статистика
+GET {{host}}/Stats
 
-### Задача 9: ошибка страницы → HTML Pages/Error.cshtml
-GET {{host}}/crash-test-page
-
-### Задача 10: удалить задачи, затем открыть /Tasks — будет «Задач пока нет»
-DELETE {{host}}/api/tasks/1
+### Подготовка для статистики: отметить задачу выполненной
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
 X-Api-Key: {{key}}
 
-### ДЗ: страница «О сервере» без AJAX
-GET {{host}}/About
+{ "isDone": true }
 
-### Занятия 1–2: API продолжает работать
-GET {{host}}/api/tasks
+### Задача 3 без токена → 400 (защита от подделки запросов работает)
+POST {{host}}/Tasks
+Content-Type: application/x-www-form-urlencoded
+
+title=Без токена
