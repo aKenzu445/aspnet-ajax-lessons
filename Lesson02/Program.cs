@@ -1,4 +1,5 @@
 // занятие 2. маршрутизация и middleware (продолжаю проект с зан1)
+using System.Diagnostics;          // Stopwatch - секундомер (зан2 зад3)
 using System.Globalization;
 using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
@@ -9,15 +10,22 @@ var builder = WebApplication.CreateBuilder(args);
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
-// ===== Занятие 2, задача 2. Middleware логирования каждого запроса =====
-// app.Use(...) добавляет в конвейер inline-middleware (способ 1 из теории).
-// context — всё о текущем запросе и ответе; next — следующий middleware в цепочке.
-// Зарегистрирован В САМОМ НАЧАЛЕ — до UseStaticFiles, поэтому видит и запросы к файлам.
+// === зан2 зад2-3: логирую каждый запрос ===
+// app.Use(...) - inline middleware (способ 1). context - всё про запрос и ответ, next - следующий в цепочке
+// стоит в самом начале, до UseStaticFiles, поэтому видит и запросы к файлам
 app.Use(async (context, next) =>
 {
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {context.Request.Method} {context.Request.Path}");
+    // зад2: что пришло. QueryString - всё что после "?" (типа ?a=10&b=0)
+    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] → {context.Request.Method} {context.Request.Path}{context.Request.QueryString}");
+
+    // зад3: засекаю сколько обрабатывается запрос
+    var stopwatch = Stopwatch.StartNew();
 
     await next();   // пускаю запрос дальше по цепочке (без этого он тут застрянет)
+
+    // сюда возвращаемся когда ответ уже готов (остальные middleware и endpoint отработали)
+    stopwatch.Stop();
+    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ← {context.Response.StatusCode} ({stopwatch.ElapsedMilliseconds} ms)");
 });
 
 // === зан1 зад4: статические файлы из wwwroot ===
