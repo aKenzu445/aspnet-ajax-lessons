@@ -1,0 +1,61 @@
+### Проверки занятия 7 (валидация). Запусти проект занятия 7 (▶). Адрес: http://localhost:5108
+### Здесь — проверки СЕРВЕРНОЙ валидации API в обход сайта (как тестировщик с Postman).
+
+@host = http://localhost:5108
+@key = lesson2-secret
+
+### Задача 7: пустое название → 400 {"errors":["Название обязательно"]}
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "" }
+
+### Задачи 5, 7: запрещённое слово → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Тестовая задача" }
+
+### Задача 4: короче 3 символов → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "аб" }
+
+### Задача 10: только пробелы → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "   " }
+
+### Задача 10: пробелы по краям не обманывают минимальную длину → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "  аб  " }
+
+### ДЗ: срок в прошлом → 400 {"errors":["Срок не может быть в прошлом"]}
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Задача со сроком", "dueDate": "2020-01-01" }
+
+### ДЗ: срок в будущем → 201
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Задача со сроком", "dueDate": "2030-01-01" }
+
+### Корректные данные → 201
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Корректная задача", "category": "Работа" }

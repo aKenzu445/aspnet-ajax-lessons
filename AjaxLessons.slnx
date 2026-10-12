@@ -20,4 +20,7 @@
   <Folder Name="/Занятие 7/">
     <Project Path="Lesson07/Lesson1.WebServer.csproj" />
   </Folder>
+  <Folder Name="/Занятие 8/">
+    <Project Path="Lesson08/Lesson1.WebServer.csproj" />
+  </Folder>
 </Solution>
