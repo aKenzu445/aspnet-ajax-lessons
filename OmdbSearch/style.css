@@ -96,16 +96,29 @@ h2 {
 /* --- инфа о фильме --- */
 #details {
     max-width: 640px;
-    margin: 0 auto;
+    margin: 0 auto 40px;
+}
+
+.details-body {
     display: flex;
+    flex-wrap: wrap;
     gap: 20px;
 }
 
-#details img {
+.details-body img {
     width: 200px;
 }
 
-#details table td {
+.details-body td {
     padding: 4px 8px;
     vertical-align: top;
+}
+
+.details-body td:first-child {
+    font-weight: bold;
+}
+
+.film-type {
+    color: #777;
+    font-size: 13px;
 }
