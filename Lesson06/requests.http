@@ -1,35 +1,38 @@
-### Проверки занятия 5. Запусти проект занятия 5 (▶). Адрес: http://localhost:5106
-### Данные теперь в базе tasks.db — они сохраняются после перезапуска сервера.
+### Проверки занятия 6. Запусти проект занятия 6 (▶). Адрес: http://localhost:5106
+### Формы редактирования удобнее проверять в браузере (нужен анти-подделочный токен).
 
 @host = http://localhost:5106
 @key = lesson2-secret
 
-### Задача 7: список из базы
-GET {{host}}/api/tasks
-
-### Задача 8: добавить в базу → 201 (Id выдаёт база, есть createdAt)
+### Подготовка: создать задачу
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Изучить EF Core" }
+{ "title": "Изучитьт ASP.NET" }
 
-### Задача 7: одна задача → 200 (или 404)
+### Задачи 2–4: страница редактирования (форма предзаполнена)
+GET {{host}}/Tasks/Edit/1
+
+### Задача 2: не число → 404
+GET {{host}}/Tasks/Edit/abc
+
+### Задача 9: отметить выполненной → 200 { ..., "isDone": true }
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "isDone": true }
+
+### Задача 9: повторный GET подтверждает изменение
 GET {{host}}/api/tasks/1
 
-### Задача 9: удалить из базы → 200, повторно → 404
-DELETE {{host}}/api/tasks/1
-X-Api-Key: {{key}}
-
-### ДЗ: задача с категорией
-POST {{host}}/api/tasks
+### Задача 9: несуществующая задача → 404
+PUT {{host}}/api/tasks/999
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Отчёт", "category": "Работа" }
+{ "isDone": true }
 
-### ДЗ: фильтр по категории
-GET {{host}}/api/tasks?category=Работа
-
-### Задача 10: статистика из базы
-GET {{host}}/Stats
+### Задача 10: несуществующая задача на странице редактирования → 302 на /Tasks с сообщением
+GET {{host}}/Tasks/Edit/999

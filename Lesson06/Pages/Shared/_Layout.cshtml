@@ -7,9 +7,10 @@
     string? currentPage = ViewContext.RouteData.Values["page"]?.ToString();
 
     // отдает "active" для пункта меню текущей страницы, иначе пусто
+    // зан6: и для вложенных страниц тоже (/Tasks/Edit -> "Задачи")
     string ActiveClass(string page)
     {
-        if (currentPage == page)
+        if (currentPage == page || (currentPage != null && currentPage.StartsWith(page + "/")))
         {
             return "active";
         }
