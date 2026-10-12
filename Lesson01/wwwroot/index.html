@@ -142,6 +142,8 @@
     // разметка одной строки списка (одна задача)
     function taskToHtml(task) {
         return `<li class="${task.isDone ? "done" : ""}">
+                    <input type="checkbox" ${task.isDone ? "checked" : ""}
+                           onchange="toggleTask(${task.id}, this.checked)">
                     <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
                     <button onclick="deleteTask(${task.id})">Удалить</button>
                 </li>`;
@@ -202,6 +204,22 @@
             showTaskMessage(data.message, false);
         }
         await loadTasks();
+    }
+
+    // === дз: чекбокс выполнено ===
+    // this.checked - стоит галка после клика или нет
+    async function toggleTask(id, isDone) {
+        const response = await fetch(`/api/tasks/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isDone: isDone })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            showTaskMessage(data.error, true);
+        }
+        await loadTasks();                        // перерисовать: выполненные зачеркнуты
     }
 
     // при открытии сразу показываю инфу о серваке и задачи

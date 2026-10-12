@@ -114,6 +114,22 @@ app.MapDelete("/api/tasks/{id}", (int id) =>
     return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
 });
 
+// === дз: отметить задачу выполненной (PUT) ===
+// PUT /api/tasks/2 с { "isDone": true } -> 200 и задача
+// PUT это когда обновляешь то что уже есть
+app.MapPut("/api/tasks/{id}", (int id, UpdateTaskStatusRequest request) =>
+{
+    TaskItem? task = TaskStorage.GetById(id);
+
+    if (task == null)
+    {
+        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+    }
+
+    task.IsDone = request.IsDone;      // меняю объект прям в списке
+    return Results.Ok(task);                                                // 200
+});
+
 // запуск сервака: начинает слушать порт и обрабатывать запросы
 app.Run();
 
@@ -126,3 +142,6 @@ public record EchoRequest(string? Text);
 
 // зад9: тело POST /api/tasks
 public record CreateTaskRequest(string? Title);
+
+// дз: тело запроса PUT /api/tasks/{id}
+public record UpdateTaskStatusRequest(bool IsDone);
