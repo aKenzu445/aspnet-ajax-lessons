@@ -24,6 +24,9 @@ builder.Services.Configure<WebEncoderOptions>(options =>
 // app - само приложение (внутри сервак Kestrel)
 var app = builder.Build();
 
+// дз зан3: запоминаю когда запустился сервак, для страницы о сервере
+ServerInfo.StartedAt = DateTime.Now;
+
 // === зан3 зад9: ошибки для обычных страниц сайта ===
 // стоит первым. если страница упала - запрос перекидывается на /Error и юзер видит Pages/Error.cshtml
 app.UseExceptionHandler("/Error");
@@ -116,8 +119,8 @@ app.MapGet("/api/hello", () => "Привет! Сервер работает.");
 // имена сами с маленькой буквы: ServerName -> "serverName"
 app.MapGet("/api/server-info", () => new
 {
-    ServerName = "Lesson1.WebServer",
-    Version = "1.0",
+    ServerName = ServerInfo.Name,     // дз зан3: значения из общего класса ServerInfo
+    Version = ServerInfo.Version,
     CurrentTime = DateTime.Now        // время считается заново на каждый запрос
 });
 

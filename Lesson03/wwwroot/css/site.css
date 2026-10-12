@@ -151,3 +151,12 @@ a.button {
     color: #777;
     font-style: italic;
 }
+
+/* дз зан3: табличка на странице о сервере */
+.info-table td {
+    padding: 4px 12px 4px 0;
+}
+
+.info-table td:first-child {
+    font-weight: bold;
+}
