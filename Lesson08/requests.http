@@ -1,61 +1,43 @@
-### Проверки занятия 7 (валидация). Запусти проект занятия 7 (▶). Адрес: http://localhost:5108
-### Здесь — проверки СЕРВЕРНОЙ валидации API в обход сайта (как тестировщик с Postman).
+### Проверки занятия 8. Запусти проект занятия 8 (▶). Адрес: http://localhost:5108
+### Для проверки пагинации добавь 12+ задач (запрос ниже можно нажать несколько раз).
 
 @host = http://localhost:5108
 @key = lesson2-secret
 
-### Задача 7: пустое название → 400 {"errors":["Название обязательно"]}
+### Задача 5: задача с категорией (1 Работа, 2 Учёба, 3 Личное — из HasData)
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "" }
+{ "title": "Курсовая работа", "categoryId": 2 }
 
-### Задачи 5, 7: запрещённое слово → 400
+### Задача 5: несуществующая категория → 400
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Тестовая задача" }
+{ "title": "Проверка категории", "categoryId": 99 }
 
-### Задача 4: короче 3 символов → 400
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
+### Задача 4: категории
+GET {{host}}/Categories
 
-{ "title": "аб" }
+### Задачи 6–7: фильтр по категории (названия категорий через Include)
+GET {{host}}/Tasks?categoryId=2
 
-### Задача 10: только пробелы → 400
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
+### Задача 9: пагинация
+GET {{host}}/Tasks?pageNumber=2
 
-{ "title": "   " }
+### Задача 9: несуществующая страница → 200, пустой список, без ошибки
+GET {{host}}/Tasks?pageNumber=99
 
-### Задача 10: пробелы по краям не обманывают минимальную длину → 400
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
+### Задача 10: всё вместе
+GET {{host}}/Tasks?categoryId=2&sortBy=title&pageNumber=2
 
-{ "title": "  аб  " }
+### ДЗ: поиск + фильтр + сортировка + страница
+GET {{host}}/Tasks?search=Курсовая&categoryId=2&sortBy=title&pageNumber=1
 
-### ДЗ: срок в прошлом → 400 {"errors":["Срок не может быть в прошлом"]}
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
+### Задача 8: статистика по категориям
+GET {{host}}/Stats
 
-{ "title": "Задача со сроком", "dueDate": "2020-01-01" }
-
-### ДЗ: срок в будущем → 201
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
-
-{ "title": "Задача со сроком", "dueDate": "2030-01-01" }
-
-### Корректные данные → 201
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
-
-{ "title": "Корректная задача", "category": "Работа" }
+### API: фильтр по категории
+GET {{host}}/api/tasks?categoryId=2
