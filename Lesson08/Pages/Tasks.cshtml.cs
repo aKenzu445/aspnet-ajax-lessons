@@ -53,14 +53,18 @@ public class TasksModel : PageModel
     // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
     private async Task LoadPageDataAsync(int? categoryId)
     {
-        // Занятие 5, задача 10: читаем из БАЗЫ — тот же источник, что у GET /api/tasks.
-        // Занятие 8: фильтр по номеру категории (внешнему ключу CategoryId).
-        IQueryable<TaskItem> query = _db.Tasks;
+        // зан5 зад10: читаю из базы, тот же источник что у GET /api/tasks
+        // зан8 зад6: EF НЕ тянет связанные данные сам - без Include у задачи Category == null, хотя CategoryId есть
+        // .Include(t => t.Category) грузит категорию вместе с задачами одним запросом (JOIN)
+        // это "жадная загрузка" (eager loading), заодно нет проблемы N+1
+        // зад7: AsQueryable - запрос еще не выполнен, можно докидывать условия
+        IQueryable<TaskItem> query = _db.Tasks.Include(t => t.Category).AsQueryable();
+        // зад7: Where добавляю тока если категорию выбрали
         if (categoryId.HasValue)
         {
             query = query.Where(t => t.CategoryId == categoryId);
         }
-        InitialTasks = await query.ToListAsync();
+        InitialTasks = await query.ToListAsync();   // только здесь запрос уходит в базу
         SelectedCategoryId = categoryId;
 
         // зан8: категории из СВОЕЙ таблицы, не надо собирать их по задачам
