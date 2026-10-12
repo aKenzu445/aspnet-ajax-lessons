@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/Занятие 1/">
+    <Project Path="Lesson01/Lesson1.WebServer.csproj" />
+  </Folder>
+</Solution>
