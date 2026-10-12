@@ -1,7 +1,7 @@
 using Lesson1.WebServer.Data;
-using Lesson1.WebServer.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lesson1.WebServer.Pages;
 
@@ -10,20 +10,28 @@ namespace Lesson1.WebServer.Pages;
 // свойства типа int - компилятор проверяет имена и типы, rider подсказывает
 public class StatsModel : PageModel
 {
+    // зан5 зад10: база через конструктор (DI)
+    private readonly TaskDbContext _db;
+
+    public StatsModel(TaskDbContext db)
+    {
+        _db = db;
+    }
+
     public int TotalCount { get; set; }
     public int DoneCount { get; set; }
     public int UndoneCount { get; set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        List<TaskItem> tasks = TaskStorage.GetAll();
+        // зан5 зад10: считаю прям в базе. CountAsync станет SELECT COUNT(*) FROM Tasks WHERE ...
+        // все задачи в память не тянутся
+        TotalCount = await _db.Tasks.CountAsync();
+        DoneCount = await _db.Tasks.CountAsync(t => t.IsDone);       // где IsDone == true
+        UndoneCount = await _db.Tasks.CountAsync(t => !t.IsDone);
 
-        TotalCount = tasks.Count;
-        DoneCount = tasks.Count(t => t.IsDone);       // LINQ: сколько штук где IsDone == true
-        UndoneCount = tasks.Count(t => !t.IsDone);
-
-        // зад10: описание страницы - по общему правилу в OnGet()
-                ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
+        // зан4 зад10: описание страницы - по общему правилу в OnGet()
+        ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
     }
 
     // === дз зан4: кнопка обновить статистику ===

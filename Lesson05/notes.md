@@ -148,3 +148,24 @@ DELETE /api/tasks/1                 → 200
 GET    /api/tasks/1                 → 404 (удалена из базы)
 DELETE /api/tasks/999               → 404
 ```
+
+## Задача 10. Razor-страницы на EF Core, старое хранилище удалено
+
+- `TasksModel` и `StatsModel` получают `TaskDbContext` **через конструктор** (DI):
+  ```csharp
+  private readonly TaskDbContext _db;
+  public TasksModel(TaskDbContext db) { _db = db; }
+  ```
+- `OnGet` → `OnGetAsync` (`await _db.Tasks.ToListAsync()`), классическое добавление → `OnPostAsync` (`_db.Tasks.Add(...)` + `SaveChangesAsync`), классическое удаление → `OnPostDeleteAsync` (`FindAsync` + `Remove` + `SaveChangesAsync`). Суффикс `Async` в именах обработчиков Razor Pages разрешён и игнорируется при выборе (`handler=Delete` найдёт `OnPostDeleteAsync`).
+- `StatsModel` считает прямо в базе: `await _db.Tasks.CountAsync(t => t.IsDone)`. EF превращает это в SQL `SELECT COUNT(*) ... WHERE IsDone`, без загрузки всех задач в память.
+- Файл `Data/TaskStorage.cs` **удалён**. Поиск по проекту `TaskStorage` → **0 совпадений**. Единственный источник данных — база через `TaskDbContext`.
+
+**Повтор сценария из задачи 1:**
+```
+Добавлено: «Через классическую форму» (форма) и «Через AJAX» (API)
+БД: 2|Через классическую форму   3|Через AJAX
+== перезапуск сервера ==
+/Tasks → #2 Через классическую форму, #3 Через AJAX   ✅ данные сохранились
+/Stats → Всего: 2, Выполнено: 0, Не выполнено: 2
+```
+(Id начинаются с 2: задача №1 была удалена в задаче 9. `AUTOINCREMENT` в SQLite не выдаёт номера повторно.)

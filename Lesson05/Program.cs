@@ -5,7 +5,7 @@ using System.Text.Encodings.Web;   // TextEncoderSettings (кириллица в
 using System.Text.Unicode;         // UnicodeRanges
 using Microsoft.Extensions.WebEncoders; // WebEncoderOptions
 using Microsoft.EntityFrameworkCore;   // UseSqlite, ToListAsync и тд (зан5)
-using Lesson1.WebServer.Data;     // TaskStorage - хранилище задач (папка Data)
+using Lesson1.WebServer.Data;     // TaskDbContext - база, ServerInfo (папка Data)
 using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
 using Lesson1.WebServer.Models;   // TaskItem - класс задачи (папка Models)
 
