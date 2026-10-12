@@ -108,12 +108,24 @@
                         <input type="checkbox" ${task.isDone ? "checked" : ""}
                                onchange="toggleTask(${task.id}, this.checked)">
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
+                        <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
                         <button onclick="deleteTask(${task.id})">Удалить</button>
                         <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
                             <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryToken()}">
                             <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
                         </form>
                     </li>`;
+        }
+
+        // зан5 зад11: дата создания как в partial _TaskItem.cshtml
+        // у задач созданных до миграции AddCreatedAt сервак отдает "0001-01-01T00:00:00"
+        function formatCreatedAt(createdAt) {
+            if (!createdAt || createdAt.startsWith("0001-01-01")) {
+                return "дата неизвестна";
+            }
+            const d = new Date(createdAt);
+            const pad = n => String(n).padStart(2, "0");   // 5 -> "05"
+            return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
         }
 
         // зан4 зад5: для обычной формы удаления в строке которую нарисовал js нужен токен защиты

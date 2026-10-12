@@ -169,3 +169,32 @@ DELETE /api/tasks/999               → 404
 /Stats → Всего: 2, Выполнено: 0, Не выполнено: 2
 ```
 (Id начинаются с 2: задача №1 была удалена в задаче 9. `AUTOINCREMENT` в SQLite не выдаёт номера повторно.)
+
+## Задача 11. Вторая миграция AddCreatedAt без потери данных
+
+1. В `TaskItem` добавлено `public DateTime CreatedAt { get; set; }`.
+2. `CreatedAt = DateTime.Now` заполняется в `POST /api/tasks` и в `TasksModel.OnPostAsync` (классическая форма).
+3. `dotnet ef migrations add AddCreatedAt`, в файле миграции:
+   ```csharp
+   // Up — добавить столбец
+   migrationBuilder.AddColumn<DateTime>(name: "CreatedAt", table: "Tasks", type: "TEXT",
+       nullable: false, defaultValue: new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified));
+   // Down — откат
+   migrationBuilder.DropColumn(name: "CreatedAt", table: "Tasks");
+   ```
+   Затем `dotnet ef database update`.
+4. **Проверка базы:**
+   ```
+   ДО:    2|Через классическую форму|0          3|Через AJAX|0
+   ПОСЛЕ: 2|Через классическую форму|0|0001-01-01 00:00:00
+          3|Через AJAX|0|0001-01-01 00:00:00
+   PRAGMA table_info(Tasks): Id, Title, IsDone, CreatedAt (TEXT, NOT NULL, default '0001-01-01 00:00:00')
+   __EFMigrationsHistory: 20261012203245_InitialCreate, 20261012203517_AddCreatedAt
+   ```
+   **Старые задачи не потерялись.** Миграция добавила столбец (`ALTER TABLE ... ADD COLUMN`), а не пересоздала таблицу. `DateTime` не может быть `null`, поэтому старые строки получили значение по умолчанию `0001-01-01`.
+5. На `/Tasks` рядом с каждой задачей выводится дата. Для старых (значение по умолчанию) — «дата неизвестна», и в partial `_TaskItem.cshtml`, и в JS `formatCreatedAt()`:
+   ```
+   #2 Через классическую форму | дата неизвестна
+   #4 После миграции           | 12.10.2026 23:35
+   #5 AJAX с датой             | 12.10.2026 23:35
+   ```

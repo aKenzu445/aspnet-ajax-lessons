@@ -197,3 +197,10 @@ h1 {
     display: inline;
     margin: 0;
 }
+
+/* --- дата создания (зан5 зад11) --- */
+.task-date {
+    color: #888;
+    font-size: 12px;
+    white-space: nowrap;
+}

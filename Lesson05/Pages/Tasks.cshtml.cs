@@ -59,7 +59,12 @@ public class TasksModel : PageModel
         }
 
         // зан5 зад10: сохраняю в базу (Id даст база)
-        _db.Tasks.Add(new TaskItem { Title = title.Trim(), IsDone = false });
+        _db.Tasks.Add(new TaskItem
+        {
+            Title = title.Trim(),
+            IsDone = false,
+            CreatedAt = DateTime.Now     // зан5 зад11: дата создания
+        });
         await _db.SaveChangesAsync();
 
         // зан4 зад4: TempData - данные которые переживают ровно один редирект

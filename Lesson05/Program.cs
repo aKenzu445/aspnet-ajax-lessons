@@ -222,7 +222,12 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
     }
 
     // зан5 зад8: создаю БЕЗ Id - база сама даст следующий номер
-    var created = new TaskItem { Title = request.Title.Trim(), IsDone = false };   // Trim - убрать пробелы по краям
+    var created = new TaskItem
+    {
+        Title = request.Title.Trim(),    // Trim - убрать пробелы по краям
+        IsDone = false,
+        CreatedAt = DateTime.Now         // зан5 зад11: дата создания
+    };
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
     await db.SaveChangesAsync();     // делаю INSERT в базе, после этого у created уже есть Id
 

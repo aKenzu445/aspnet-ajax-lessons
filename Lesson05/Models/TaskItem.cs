@@ -9,4 +9,7 @@ public class TaskItem
     public int Id { get; set; }                 // номер задачи
     public string Title { get; set; } = "";     // текст задачи (по умолчанию пусто)
     public bool IsDone { get; set; }            // сделана или нет (по умолчанию false)
+
+    // зан5 зад11: дата и время создания (новый столбец -> миграция AddCreatedAt)
+    public DateTime CreatedAt { get; set; }
 }
