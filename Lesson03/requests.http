@@ -1,58 +1,29 @@
-### Запросы для проверки занятия 2 (Rider HTTP Client вместо Postman).
-### Запусти проект занятия 2 (▶), затем нажимай зелёные стрелки слева от запросов.
-### Внимание: ДЗ — не больше 5 запросов к /api за 10 секунд, иначе 429.
+### Проверки занятия 3. Запусти проект занятия 3 (▶).
 
 @host = http://localhost:5103
 @key = lesson2-secret
 
-### Задача 4: одна задача по id → 200
-GET {{host}}/api/tasks/1
+### Задача 1: Razor-страница без layout
+GET {{host}}/Test
 
-### Задача 4: несуществующая задача → 404 { "error": "Задача не найдена" }
-GET {{host}}/api/tasks/99
+### Задача 2–3: главная (Razor + layout)
+GET {{host}}/
 
-### Задача 5: не число → 404 (сработал route constraint {id:int})
-GET {{host}}/api/tasks/abc
+### Задачи 4–6: список задач приходит в HTML сразу (SSR)
+GET {{host}}/Tasks
 
-### Задача 7: POST без ключа → 401
-POST {{host}}/api/tasks
-Content-Type: application/json
-
-{ "title": "Без ключа" }
-
-### Задача 7: POST с ключом → 201
-POST {{host}}/api/tasks
-Content-Type: application/json
-X-Api-Key: {{key}}
-
-{ "title": "С ключом" }
-
-### Задача 7: чтение без ключа → 200
-GET {{host}}/api/tasks
-
-### Задача 7: DELETE без ключа → 401
-DELETE {{host}}/api/tasks/1
-
-### Задача 7: DELETE с ключом → 200
-DELETE {{host}}/api/tasks/1
-X-Api-Key: {{key}}
-
-### Задача 8: намеренная ошибка → 500 { "error": "Внутренняя ошибка сервера" }
+### Задача 9: ошибка API → JSON 500
 GET {{host}}/api/crash-test
 
-### Задача 10: режим техработ → 503
+### Задача 9: ошибка страницы → HTML Pages/Error.cshtml
+GET {{host}}/crash-test-page
+
+### Задача 10: удалить задачи, затем открыть /Tasks — будет «Задач пока нет»
+DELETE {{host}}/api/tasks/1
+X-Api-Key: {{key}}
+
+### ДЗ: страница «О сервере» без AJAX
+GET {{host}}/About
+
+### Занятия 1–2: API продолжает работать
 GET {{host}}/api/tasks
-X-Maintenance: true
-
-### Задача 10: статический файл в режиме техработ → 200
-GET {{host}}/index.html
-X-Maintenance: true
-
-### Занятие 1 (должно работать как прежде): калькулятор
-GET {{host}}/api/sum?a=8&b=4
-
-### Занятие 1: echo
-POST {{host}}/api/echo
-Content-Type: application/json
-
-{ "text": "hello" }
