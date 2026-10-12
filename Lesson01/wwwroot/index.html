@@ -16,6 +16,16 @@
         <button id="serverInfoBtn">Получить информацию о сервере</button>
         <div id="result" class="result"></div>
     </section>
+
+    <!-- зад5: сумма через query string -->
+    <section class="card">
+        <h2>Сумма (вычисляет сервер)</h2>
+        <input id="sumA" type="number" step="any" placeholder="a">
+        +
+        <input id="sumB" type="number" step="any" placeholder="b">
+        <button id="sumBtn">Посчитать</button>
+        <div id="sumResult" class="result"></div>
+    </section>
 </main>
 
 <script>
@@ -33,6 +43,25 @@
     }
 
     document.getElementById("serverInfoBtn").addEventListener("click", loadServerInfo);
+
+    // === зад5 ===
+    // числа кидаю прям в адрес: /api/sum?a=...&b=...
+    // encodeURIComponent чтоб спецсимволы адрес не ломали
+    document.getElementById("sumBtn").addEventListener("click", async () => {
+        const a = document.getElementById("sumA").value;
+        const b = document.getElementById("sumB").value;
+
+        const response = await fetch(`/api/sum?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+        const resultBlock = document.getElementById("sumResult");
+
+        if (!response.ok) {
+            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: введите оба числа</span>`;
+            return;
+        }
+
+        const data = await response.json();
+        resultBlock.innerHTML = `<span class="ok">${data.a} + ${data.b} = <b>${data.result}</b></span>`;
+    });
 </script>
 </body>
 </html>
