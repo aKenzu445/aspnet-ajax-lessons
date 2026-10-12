@@ -48,3 +48,59 @@ Entity Framework Core .NET Command-line Tools
   Это регистрация в контейнере **внедрения зависимостей (DI)**. Теперь, если endpoint или PageModel попросит `TaskDbContext` (параметром или в конструкторе), ASP.NET Core сам его создаст и передаст.
 
 **Проверка:** сервер запускается без исключений. Файла `tasks.db` ещё **нет** (`ls tasks.db` → No such file or directory): регистрация только *описывает*, как подключаться, но саму базу не создаёт.
+
+## Задача 5. Первая миграция и создание базы данных
+
+**Шаг 1 — создать миграцию** (в терминале Rider, в папке `Lesson05`):
+```bash
+dotnet ef migrations add InitialCreate
+```
+Появилась папка `Migrations`:
+- `20261012203245_InitialCreate.cs` — сама миграция (методы `Up` и `Down`);
+- `..._InitialCreate.Designer.cs` — служебное описание модели на момент миграции;
+- `TaskDbContextModelSnapshot.cs` — «снимок» текущей модели. С ним EF сравнивает классы при следующей миграции.
+
+После этой команды файла `tasks.db` **ещё нет**: миграция — только **план** изменений, она не меняет базу.
+
+**Что внутри `Up()`** — создать таблицу:
+```csharp
+migrationBuilder.CreateTable(
+    name: "Tasks",
+    columns: table => new
+    {
+        Id = table.Column<int>(type: "INTEGER", nullable: false)
+            .Annotation("Sqlite:Autoincrement", true),
+        Title = table.Column<string>(type: "TEXT", nullable: false),
+        IsDone = table.Column<bool>(type: "INTEGER", nullable: false)
+    },
+    constraints: table => { table.PrimaryKey("PK_Tasks", x => x.Id); });
+```
+**Что внутри `Down()`** — откат: `migrationBuilder.DropTable(name: "Tasks");`
+
+**Шаг 2 — применить миграцию:**
+```bash
+dotnet ef database update
+```
+Появился файл **`Lesson05/tasks.db`** (24 КБ). Теперь план **исполнен**.
+
+## Задача 6. Просмотр содержимого базы данных
+
+**В Rider:** справа вкладка **Database** → `+` → **Data Source** → **SQLite** → в поле File выбрать `Lesson05/tasks.db` → (при первом запуске Rider предложит скачать драйвер — Download) → OK. Раскрыть `main → tables → Tasks`. Двойной клик по таблице откроет данные.
+
+**То же самое из терминала** (`sqlite3` встроен в macOS):
+```
+$ sqlite3 tasks.db ".schema Tasks"
+CREATE TABLE "Tasks" (
+    "Id" INTEGER NOT NULL CONSTRAINT "PK_Tasks" PRIMARY KEY AUTOINCREMENT,
+    "Title" TEXT NOT NULL,
+    "IsDone" INTEGER NOT NULL
+);
+$ sqlite3 tasks.db "SELECT COUNT(*) FROM Tasks;"
+0
+$ sqlite3 tasks.db "SELECT MigrationId FROM __EFMigrationsHistory;"
+20261012203245_InitialCreate
+```
+- `Id` — первичный ключ с **автоинкрементом** (база сама выдаёт 1, 2, 3...);
+- `Title` — текст (`TEXT`), `IsDone` — в SQLite нет типа bool, поэтому `INTEGER` (0/1);
+- таблица **пуста**: данные из старого списка в памяти не переносились;
+- служебная таблица `__EFMigrationsHistory` хранит, какие миграции уже применены.
