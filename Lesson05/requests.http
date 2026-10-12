@@ -1,25 +1,35 @@
-### Проверки занятия 4. Запусти проект занятия 4 (▶). Адрес: http://localhost:5105
-### Формы (задачи 3–5, 9, ДЗ) удобнее проверять в браузере: им нужен анти-подделочный
-### токен, который Razor вставляет в каждую <form method="post">.
+### Проверки занятия 5. Запусти проект занятия 5 (▶). Адрес: http://localhost:5105
+### Данные теперь в базе tasks.db — они сохраняются после перезапуска сервера.
 
 @host = http://localhost:5105
 @key = lesson2-secret
 
-### Задача 1, 10: заголовок вкладки и описание (смотри <title> и page-description)
-GET {{host}}/Tasks
+### Задача 7: список из базы
+GET {{host}}/api/tasks
 
-### Задачи 6–7: статистика
-GET {{host}}/Stats
-
-### Подготовка для статистики: отметить задачу выполненной
-PUT {{host}}/api/tasks/1
+### Задача 8: добавить в базу → 201 (Id выдаёт база, есть createdAt)
+POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "isDone": true }
+{ "title": "Изучить EF Core" }
 
-### Задача 3 без токена → 400 (защита от подделки запросов работает)
-POST {{host}}/Tasks
-Content-Type: application/x-www-form-urlencoded
+### Задача 7: одна задача → 200 (или 404)
+GET {{host}}/api/tasks/1
 
-title=Без токена
+### Задача 9: удалить из базы → 200, повторно → 404
+DELETE {{host}}/api/tasks/1
+X-Api-Key: {{key}}
+
+### ДЗ: задача с категорией
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Отчёт", "category": "Работа" }
+
+### ДЗ: фильтр по категории
+GET {{host}}/api/tasks?category=Работа
+
+### Задача 10: статистика из базы
+GET {{host}}/Stats
