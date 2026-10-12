@@ -83,7 +83,8 @@ namespace Lesson1.WebServer.Migrations
                 {
                     b.HasOne("Lesson1.WebServer.Models.Category", "Category")
                         .WithMany("Tasks")
-                        .HasForeignKey("CategoryId");
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
                 });

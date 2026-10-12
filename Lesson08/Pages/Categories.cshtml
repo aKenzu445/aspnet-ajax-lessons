@@ -17,12 +17,19 @@
 <section class="card">
     <h2>Все категории</h2>
     <table class="info-table">
-        <tr><td>№</td><td>Название</td></tr>
+        <tr><td>№</td><td>Название</td><td>Задач</td><td></td></tr>
         @foreach (var c in Model.AllCategories)
         {
             <tr>
                 <td>@c.Id</td>
                 <td>@c.Name</td>
+                <td>@c.Tasks.Count</td>
+                <td>
+                    @* зад11: удалить категорию (обработчик OnPostDelete) *@
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@c.Id" class="inline-form">
+                        <button type="submit">Удалить</button>
+                    </form>
+                </td>
             </tr>
         }
     </table>

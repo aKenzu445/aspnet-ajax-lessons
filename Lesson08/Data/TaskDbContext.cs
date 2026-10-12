@@ -28,5 +28,16 @@ public class TaskDbContext : DbContext
             new Category { Id = 2, Name = "Учёба" },
             new Category { Id = 3, Name = "Личное" }
         );
+
+        // === зан8 зад11: что делать с задачами когда удаляют категорию ===
+        // Fluent API - настройка связи кодом (когда соглашений не хватает):
+        // у задачи ОДНА категория (HasOne), у категории МНОГО задач (WithMany), ключ CategoryId
+        // OnDelete(SetNull): удалили категорию -> у её задач CategoryId = NULL, задачи остаются "без категории"
+        // (по умолчанию было ClientSetNull и база не давала удалить: FOREIGN KEY constraint failed)
+        modelBuilder.Entity<TaskItem>()
+            .HasOne(t => t.Category)
+            .WithMany(c => c.Tasks)
+            .HasForeignKey(t => t.CategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

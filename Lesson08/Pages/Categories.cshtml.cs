@@ -32,7 +32,8 @@ public class CategoriesModel : PageModel
 
     private async Task LoadAsync()
     {
-        AllCategories = await _db.Categories.OrderBy(c => c.Id).ToListAsync();
+        // Include(c => c.Tasks) - подтягиваю задачи категории, чтоб показать сколько их
+        AllCategories = await _db.Categories.Include(c => c.Tasks).OrderBy(c => c.Id).ToListAsync();
         ViewData["Description"] = "Список категорий задач: добавляйте новые без правки кода и миграций";
     }
 
@@ -57,6 +58,23 @@ public class CategoriesModel : PageModel
         await _db.SaveChangesAsync();
 
         TempData["Message"] = $"Категория «{NewCategory.Name}» добавлена";
+        return RedirectToPage();
+    }
+
+    // === зан8 зад11: удаление категории ===
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        Category? category = await _db.Categories.FindAsync(id);
+        if (category == null)
+        {
+            TempData["Error"] = "Категория не найдена";
+            return RedirectToPage();
+        }
+
+        _db.Categories.Remove(category);
+        await _db.SaveChangesAsync();
+
+        TempData["Message"] = $"Категория «{category.Name}» удалена";
         return RedirectToPage();
     }
 }

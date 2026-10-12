@@ -182,3 +182,34 @@ InitialTasks = await query
 Ссылки на странице: …?pageNumber=1&categoryId=2&sortBy=title, …?categoryId=2&sortBy=date&pageNumber=2
 ```
 Все три параметра работают одновременно и не сбрасывают друг друга.
+
+## Задача 11. Удаление категории со связанными задачами
+
+На `/Categories` добавлена кнопка «Удалить» (обработчик `OnPostDeleteAsync(int id)`) и колонка «Задач» (`Include(c => c.Tasks)`).
+
+**Поведение по умолчанию (воспроизведено):** для необязательной связи (`int? CategoryId`) EF Core по умолчанию использует `DeleteBehavior.ClientSetNull`. Внешний ключ в базе создан с `ON DELETE NO ACTION`, а EF обнуляет `CategoryId` только у задач, **загруженных в память**. Задачи не загружались, поэтому база отказалась удалять категорию, на которую ссылаются 4 задачи:
+```
+POST /Categories?id=1&handler=Delete → 500, страница «Ошибка»
+DbUpdateException → SqliteException: SQLite Error 19: 'FOREIGN KEY constraint failed'.
+Категория «Работа» и её 4 задачи остались на месте.
+```
+(Другой возможный вариант по умолчанию — каскадное удаление `Cascade` — удалил бы **все задачи** категории вместе с ней. Он применяется для обязательных связей `int CategoryId`.)
+
+**Осознанный выбор — SetNull** (Fluent API в `OnModelCreating`):
+```csharp
+modelBuilder.Entity<TaskItem>()
+    .HasOne(t => t.Category)
+    .WithMany(c => c.Tasks)
+    .HasForeignKey(t => t.CategoryId)
+    .OnDelete(DeleteBehavior.SetNull);
+```
+Миграция `ChangeCategoryDeleteBehavior`: `DropForeignKey` + `AddForeignKey(..., onDelete: ReferentialAction.SetNull)`. В базе: `PRAGMA foreign_key_list(Tasks)` → `ON DELETE SET NULL`.
+
+**Проверка:**
+```
+ДО:    «Работа»: 4 задачи, всего 16
+Удалить «Работа» → 302, «Категория «Работа» удалена»
+ПОСЛЕ: категории Учёба, Личное, Спорт; всего задач 16 (ни одна не удалена); без категории: 6
+       «Отчёт для начальника», «Рабочая задача 1–3» → CategoryId = NULL
+/Stats: «Без категории: 6», итого 16
+```
