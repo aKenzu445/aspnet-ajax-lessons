@@ -1,4 +1,5 @@
 // занятие 1. веб-сервер на asp.net core и первые ajax запросы
+using System.Globalization;
 
 // builder - тут настраиваю сервисы и конфиг
 var builder = WebApplication.CreateBuilder(args);
@@ -51,6 +52,30 @@ app.MapPost("/api/echo", (EchoRequest request) =>
         Uppercase = text.ToUpper(),
         Length = text.Length
     };
+});
+
+// === зад7: ошибки и нормальные коды ответа ===
+// GET /api/divide?a=10&b=2
+// тут специально string?, а не double - сам проверяю что пришло и отдаю понятную ошибку,
+// а не автоматический 400 со страшным текстом как в зад5
+app.MapGet("/api/divide", (string? a, string? b) =>
+{
+    // double.TryParse пробует сделать из строки число: true и число в x (out x), или false если не число
+    // InvariantCulture - дробь через точку "2.5"
+    bool aOk = double.TryParse(a, NumberStyles.Float, CultureInfo.InvariantCulture, out double x);
+    bool bOk = double.TryParse(b, NumberStyles.Float, CultureInfo.InvariantCulture, out double y);
+
+    if (!aOk || !bOk)   // ! - "не", || - "или"
+    {
+        return Results.BadRequest(new { Error = "Некорректные параметры" });   // 400
+    }
+
+    if (y == 0)
+    {
+        return Results.BadRequest(new { Error = "Деление на ноль невозможно" }); // 400
+    }
+
+    return Results.Ok(new { Result = x / y });                                  // 200
 });
 
 // запуск сервака: начинает слушать порт и обрабатывать запросы

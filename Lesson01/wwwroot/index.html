@@ -34,6 +34,16 @@
         <button id="echoBtn">Отправить</button>
         <div id="echoResult" class="result"></div>
     </section>
+
+    <!-- зад7: деление + ошибки -->
+    <section class="card">
+        <h2>Деление (с проверкой ошибок)</h2>
+        <input id="divA" type="text" placeholder="a">
+        ÷
+        <input id="divB" type="text" placeholder="b">
+        <button id="divBtn">Разделить</button>
+        <div id="divResult" class="result"></div>
+    </section>
 </main>
 
 <script>
@@ -88,6 +98,24 @@
             `Исходный: ${data.original}<br>` +
             `Верхний регистр: <b>${data.uppercase}</b><br>` +
             `Длина: ${data.length}`;
+    });
+
+    // === зад7 ===
+    // response.ok = true если код 200-299, иначе ошибка
+    // ошибку пишу красным, а не пытаюсь показать как результат
+    document.getElementById("divBtn").addEventListener("click", async () => {
+        const a = document.getElementById("divA").value;
+        const b = document.getElementById("divB").value;
+
+        const response = await fetch(`/api/divide?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+        const data = await response.json();
+        const resultBlock = document.getElementById("divResult");
+
+        if (!response.ok) {
+            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error}</span>`;
+        } else {
+            resultBlock.innerHTML = `<span class="ok">Результат: <b>${data.result}</b></span>`;
+        }
     });
 </script>
 </body>
