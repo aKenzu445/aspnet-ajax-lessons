@@ -247,3 +247,15 @@ a.button-link {
     font-size: 14px;
     white-space: nowrap;
 }
+
+/* зад7: текст ошибок под полями */
+.field-error {
+    color: #c0392b;
+    font-size: 13px;
+    width: 100%;
+}
+
+input.input-validation-error {
+    border-color: #c0392b;
+    background: #fff6f5;
+}

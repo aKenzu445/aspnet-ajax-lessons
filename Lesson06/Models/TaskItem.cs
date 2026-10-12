@@ -9,8 +9,13 @@ public class TaskItem
 {
     // по соглашению EF свойство Id - ПЕРВИЧНЫЙ КЛЮЧ, база сама дает 1, 2, 3... (автоинкремент)
     public int Id { get; set; }                 // номер задачи
-    // Занятие 6, задача 4: [Display] — человеческое имя поля для <label asp-for="...">
+    // зан6 зад4: [Display] - нормальное имя поля для <label asp-for>
+    // зан6 зад7: DataAnnotations - правила проверки прям на свойстве:
+    //   [Required] - обязательно (пусто или одни пробелы - ошибка)
+    //   [StringLength] - не длиннее 100, EF тоже это учитывает
     [Display(Name = "Название")]
+    [Required(ErrorMessage = "Название обязательно")]
+    [StringLength(100, ErrorMessage = "Не более 100 символов")]
     public string Title { get; set; } = "";     // текст задачи (по умолчанию пусто)
     public bool IsDone { get; set; }            // сделана или нет (по умолчанию false)
 

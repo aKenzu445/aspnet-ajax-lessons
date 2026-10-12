@@ -21,6 +21,8 @@
             @* label asp-for берет имя поля из [Display(Name = "Название")] в TaskItem *@
             <label asp-for="Task.Title"></label>
             <input asp-for="Task.Title" />
+            @* зад7: текст ошибки для поля Title *@
+            <span asp-validation-for="Task.Title" class="field-error"></span>
         </div>
 
         <div class="form-row">

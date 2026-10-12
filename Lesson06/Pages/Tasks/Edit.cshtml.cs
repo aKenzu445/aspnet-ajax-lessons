@@ -26,12 +26,30 @@ public class EditModel : PageModel
     {
         // FindAsync вернёт null, если задачи нет (это обрабатывается в задаче 10)
         Task = (await _db.Tasks.FindAsync(id))!;
+        SetDescription();
+    }
+
+    // описание страницы (правило зан4: Description в PageModel)
+    // вынес в метод, потому что страница показывается и из OnGet, и из OnPost (при ошибке)
+    private void SetDescription()
+    {
+        ViewData["Description"] = "Измените название или отметьте задачу выполненной";
     }
 
     // === зан6 зад5: сохраняю изменения ===
     // POST /Tasks/Edit/5. Task уже заполнен из формы благодаря [BindProperty]
     public async Task<IActionResult> OnPostAsync()
     {
+        // === зан6 зад7: проверка на серваке ===
+        // ModelState - результат проверки атрибутов [Required], [StringLength]...
+        // есть ошибки - НЕ сохраняю и показываю ту же форму без редиректа:
+        // введенное остается в полях, а asp-validation-for пишет ошибку
+        if (!ModelState.IsValid)
+        {
+            SetDescription();
+            return Page();
+        }
+
         // ищу задачу в базе ЗАНОВО по Task.Id (из скрытого поля формы)
         // объекта из OnGetAsync уже нет: каждый запрос - НОВЫЙ EditModel и НОВЫЙ TaskDbContext
         TaskItem? existing = await _db.Tasks.FindAsync(Task.Id);

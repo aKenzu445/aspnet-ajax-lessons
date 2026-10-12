@@ -44,3 +44,27 @@
 - скрытое `Task.IsDone=false`: если галочку снять, браузер не отправляет чекбокс вообще, а это поле передаст `false`;
 - `data-val-*` атрибуты для клиентской валидации (пригодятся в занятии 7);
 - анти-подделочный токен `__RequestVerificationToken`.
+
+## Задача 5. Сохранение: почему задачу ищем заново
+
+`OnPostAsync` **заново** ищет задачу `await _db.Tasks.FindAsync(Task.Id)` и только потом переносит в неё `Title` и `IsDone` из формы. Объект, загруженный в `OnGetAsync`, к моменту POST уже не существует. Каждый HTTP-запрос обрабатывается **новым** экземпляром `EditModel` и **новым** `TaskDbContext` (HTTP не хранит состояние между запросами). Какую запись менять, сервер узнаёт из **скрытого поля** `<input type="hidden" asp-for="Task.Id" />`.
+
+Проверка: `/Tasks/Edit/1` «Изучить ASP.NET» → «Изучить ASP.NET Core» → Сохранить → **302** на `/Tasks` → «Задача обновлена!» → в списке новое название, `GET /api/tasks/1` подтверждает.
+
+## Задача 7. Серверная валидация (DataAnnotations)
+
+На `TaskItem.Title`: `[Required(ErrorMessage = "Название обязательно")]`, `[StringLength(100, ErrorMessage = "Не более 100 символов")]`. В `OnPostAsync` перед сохранением:
+```csharp
+if (!ModelState.IsValid) { SetDescription(); return Page(); }
+```
+В форме: `<span asp-validation-for="Task.Title"></span>`.
+
+**Проверка:**
+```
+Пустое название   → 200 (без редиректа), «Название обязательно» рядом с полем
+101 символ        → 200, «Не более 100 символов»
+GET /api/tasks/1  → название осталось «Изучить ASP.NET Core» (в базе НЕ изменено)
+```
+`return Page()` вместо редиректа: страница показывается сразу с введёнными значениями и ошибками (`ModelState` живёт только в этом запросе).
+
+**Миграция `TitleMaxLength`:** `[StringLength(100)]` меняет и модель EF Core (максимальная длина столбца). Без миграции EF посчитал бы модель изменённой, и `Database.Migrate()` при запуске выдал бы ошибку «pending model changes». В SQLite длина `TEXT` не ограничивается, поэтому метод `Up()` пустой. Но «снимок» модели (`TaskDbContextModelSnapshot.cs`) теперь содержит `.HasMaxLength(100)`. Для SQL Server/PostgreSQL здесь был бы `AlterColumn` на `nvarchar(100)`.
