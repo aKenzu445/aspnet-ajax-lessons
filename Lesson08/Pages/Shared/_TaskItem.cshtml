@@ -11,10 +11,11 @@
     <input type="checkbox" checked="@Model.IsDone"
            onchange="toggleTask(@Model.Id, this)">
     <span class="task-title">#@Model.Id @Model.Title</span>
-    @* дз зан5: категория (если есть) *@
-    @if (Model.Category != null)
+    @* Занятие 5, ДЗ → занятие 8: название категории через навигационное свойство Category.
+       ?. — если Category == null (не загружена или задача без категории), не падаем. *@
+    @if (Model.CategoryId != null)
     {
-        <span class="task-category">@Model.Category</span>
+        <span class="task-category">@Model.Category?.Name</span>
     }
     @* зан5 зад11: дата создания. у задач созданных ДО миграции AddCreatedAt в базе 0001-01-01 (default) - пишу "дата неизвестна" *@
     <span class="task-date">@(Model.CreatedAt == default ? "дата неизвестна" : Model.CreatedAt.ToString("dd.MM.yyyy HH:mm"))</span>

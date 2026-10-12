@@ -36,15 +36,15 @@
     <!-- зад8-10 + дз: список задач -->
     <section class="card">
         <h2>Список</h2>
-        @* дз зан5: фильтр по категории
-           method="get" - выбор попадает в адрес /Tasks?category=Работа и прилетает в OnGetAsync(string? category) *@
+        @* дз зан5 -> зан8 зад7: фильтр по категории
+           method="get" - выбор попадает в адрес /Tasks?categoryId=2 и прилетает в OnGetAsync(int? categoryId) *@
         <form method="get" class="filter-form">
             <label for="categoryFilter">Категория:</label>
-            <select id="categoryFilter" name="category">
+            <select id="categoryFilter" name="categoryId">
                 <option value="">Все задачи</option>
-                @foreach (var c in Model.Categories)
+                @foreach (var c in Model.AllCategories)
                 {
-                    <option value="@c" selected="@(c == Model.SelectedCategory)">@c</option>
+                    <option value="@c.Id" selected="@(c.Id == Model.SelectedCategoryId)">@c.Name</option>
                 }
             </select>
             <button type="submit">Применить</button>
@@ -77,12 +77,9 @@
         <!-- зад9: добавить через ajax (без перезагрузки) -->
         <h3>Добавить задачу (AJAX)</h3>
         <input id="newTaskTitle" type="text" placeholder="Новая задача">
-        <select id="newTaskCategory">
+        @* зан8: категории из таблицы Categories (value = Id) *@
+        <select id="newTaskCategory" asp-items="Model.CategoryOptions">
             <option value="">Без категории</option>
-            @foreach (var c in TaskCategories.All)
-            {
-                <option value="@c">@c</option>
-            }
         </select>
         <input id="newTaskDueDate" type="date" title="Срок (необязательно)">
         <button id="addTaskBtn">Добавить задачу</button>
@@ -97,8 +94,10 @@
            ошибка (asp-validation-for) показывается так же как на странице редактирования *@
         <form method="post">
             <input asp-for="NewTask.Title" placeholder="Новая задача" />
-            @* дз зан6: категория из того же списка что на странице редактирования *@
-            <select asp-for="NewTask.Category" asp-items="new SelectList(TaskCategories.All)">
+            @* зан8 зад5: выбор категории из таблицы Categories:
+               asp-for="NewTask.CategoryId" - выбранный Id попадет в NewTask.CategoryId
+               asp-items - варианты из TasksModel.CategoryOptions (SelectList из базы) *@
+            <select asp-for="NewTask.CategoryId" asp-items="Model.CategoryOptions">
                 <option value="">Без категории</option>
             </select>
             @* дз зан7: срок (type="date" из-за [DataType(DataType.Date)]) *@
@@ -127,6 +126,11 @@
         // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
         const API_KEY = "lesson2-secret";
 
+        // Занятие 8: названия категорий по их Id — для строк, которые рисует JavaScript.
+        // API отдаёт у задачи только categoryId; словарь Id → название формирует сервер (Razor)
+        // из таблицы Categories. Json.Serialize превращает C#-словарь в JS-объект { "1": "Работа", ... }
+        const CATEGORY_NAMES = @Json.Serialize(Model.AllCategories.ToDictionary(c => c.Id, c => c.Name));
+
         // === зад8: грузим список задач ===
 
         // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
@@ -145,7 +149,7 @@
                         <input type="checkbox" ${task.isDone ? "checked" : ""}
                                onchange="toggleTask(${task.id}, this)">
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
-                        ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
+                        ${task.categoryId && CATEGORY_NAMES[task.categoryId] ? `<span class="task-category">${escapeHtml(CATEGORY_NAMES[task.categoryId])}</span>` : ""}
                         <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
                         ${task.dueDate ? `<span class="task-due">срок: ${task.dueDate.substring(8, 10)}.${task.dueDate.substring(5, 7)}.${task.dueDate.substring(0, 4)}</span>` : ""}
                         <a href="/Tasks/Edit/${task.id}" class="button-link">Редактировать</a>
@@ -175,9 +179,10 @@
         }
 
         async function loadTasks() {
-            // дз зан5: учитываю фильтр (?category=... в адресе), чтоб после ajax он не слетал
-            const category = new URLSearchParams(location.search).get("category");
-            const url = category ? `/api/tasks?category=${encodeURIComponent(category)}` : "/api/tasks";
+            // Занятие 5, ДЗ: учитываем выбранный фильтр (?categoryId=... в адресе страницы),
+            // чтобы после добавления/удаления через AJAX не "сбросить" фильтр
+            const categoryId = new URLSearchParams(location.search).get("categoryId");
+            const url = categoryId ? `/api/tasks?categoryId=${encodeURIComponent(categoryId)}` : "/api/tasks";
             const response = await fetch(url);
 
             // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
@@ -229,7 +234,8 @@
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
                 body: JSON.stringify({
                     title: input.value,
-                    category: document.getElementById("newTaskCategory").value,   // дз зан5
+                    // зан8: номер категории (Id) или null если "Без категории"
+                    categoryId: document.getElementById("newTaskCategory").value ? Number(document.getElementById("newTaskCategory").value) : null,
                     // дз зан7: "2026-10-20" или null если дату не выбрали
                     dueDate: document.getElementById("newTaskDueDate").value || null
                 })

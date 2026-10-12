@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;   // атрибуты [Display], [Required] и тд (зан6)
-using Lesson1.WebServer.Validation;           // мой атрибут [AllowedCategory] (дз зан6)
+using Lesson1.WebServer.Validation;           // мои атрибуты [NoForbiddenWords], [MustBeFutureOrToday]
 
 namespace Lesson1.WebServer.Models;
 
@@ -26,11 +26,18 @@ public class TaskItem
     // зан5 зад11: дата и время создания (новый столбец -> миграция AddCreatedAt)
     public DateTime CreatedAt { get; set; }
 
-    // дз зан5: категория задачи, необязательная (string?, может быть null)
-    // дз зан6: можно тока категории из TaskCategories.All - проверяет мой атрибут [AllowedCategory] (папка Validation)
+    // === зан8 зад2: связь один-ко-многим с категорией ===
+    // было (дз зан5-6): string? Category - название строкой прям в задаче
+    // стало: задача хранит тока НОМЕР категории (внешний ключ) + навигационное свойство
+    //
+    // CategoryId - внешний ключ на Categories.Id, int? потому что можно без категории
+    // EF сам понимает по именам: Category + Id = CategoryId
     [Display(Name = "Категория")]
-    [AllowedCategory]
-    public string? Category { get; set; }
+    public int? CategoryId { get; set; }
+
+    // НАВИГАЦИОННОЕ свойство: сам объект категории, в базе такого столбца нет
+    // EF заполняет его тока если попросить: .Include(t => t.Category) (зад6)
+    public Category? Category { get; set; }
 
     // дз зан7: срок (дедлайн), необязательный. DateTime? - дата которой может не быть (null)
     // [DataType(DataType.Date)] - asp-for нарисует <input type="date">

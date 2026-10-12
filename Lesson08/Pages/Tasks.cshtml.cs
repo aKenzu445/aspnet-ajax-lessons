@@ -2,6 +2,7 @@ using Lesson1.WebServer.Data;
 using Lesson1.WebServer.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;   // SelectList - варианты для <select>
 using Microsoft.EntityFrameworkCore;
 
 namespace Lesson1.WebServer.Pages;
@@ -24,13 +25,18 @@ public class TasksModel : PageModel
     // стартовый список задач для серверной отрисовки (SSR)
     public List<TaskItem> InitialTasks { get; set; } = new();
 
-    // дз зан5: все категории что есть (для фильтра) и какая выбрана (null - все задачи)
-    public List<string> Categories { get; set; } = new();
-    public string? SelectedCategory { get; set; }
+    // дз зан5 -> зан8: все категории из таблицы Categories (для фильтра) и какая выбрана (null - все задачи)
+    public List<Category> AllCategories { get; set; } = new();
+    public int? SelectedCategoryId { get; set; }
+
+    // зан8 зад5: варианты выпадающего списка категорий для формы добавления
+    // SelectList(список, "Id", "Name"): value у <option> = Id, текст = Name
+    // (в задании ViewBag.Categories, но взял свойство с типом - как выяснили в зан4, компилятор проверяет имя и тип)
+    public SelectList CategoryOptions { get; set; } = new(Array.Empty<Category>());
 
     // === зан6 зад8: новая задача из обычной формы ===
     // вместо OnPost(string title) теперь привязка модели [BindProperty]:
-    // поля asp-for="NewTask.Title" / "NewTask.Category" заполняют этот объект,
+    // поля asp-for="NewTask.Title" / "NewTask.CategoryId" заполняют этот объект,
     // а [Required]/[StringLength] с TaskItem.Title проверяются сами
     [BindProperty]
     public TaskItem NewTask { get; set; } = new();
@@ -38,32 +44,28 @@ public class TasksModel : PageModel
     // OnGet срабатывает сам на GET /Tasks
     // зан5: стал async, т.к. читает из базы
     // дз зан5: category прилетает из адреса /Tasks?category=Работа (форма фильтра)
-    public async Task OnGetAsync(string? category)
+    public async Task OnGetAsync(int? categoryId)
     {
-        await LoadPageDataAsync(category);
+        await LoadPageDataAsync(categoryId);
     }
 
     // грузит всё что надо для страницы. зову из OnGetAsync и из OnPostAsync,
     // когда форма не прошла проверку и страница показывается сразу без редиректа (OnGetAsync тогда не вызывается)
-    private async Task LoadPageDataAsync(string? category)
+    private async Task LoadPageDataAsync(int? categoryId)
     {
-        // зан5 зад10: читаю из БАЗЫ - тот же источник что у GET /api/tasks
-        // дз зан5: фильтр по категории через LINQ
+        // Занятие 5, задача 10: читаем из БАЗЫ — тот же источник, что у GET /api/tasks.
+        // Занятие 8: фильтр по номеру категории (внешнему ключу CategoryId).
         IQueryable<TaskItem> query = _db.Tasks;
-        if (!string.IsNullOrEmpty(category))
+        if (categoryId.HasValue)
         {
-            query = query.Where(t => t.Category == category);
+            query = query.Where(t => t.CategoryId == categoryId);
         }
         InitialTasks = await query.ToListAsync();
-        SelectedCategory = category;
+        SelectedCategoryId = categoryId;
 
-        // категории без повторов: Select - тока поле Category, Where - без пустых, Distinct - без повторов, OrderBy - по алфавиту
-        Categories = await _db.Tasks
-            .Where(t => t.Category != null)
-            .Select(t => t.Category!)
-            .Distinct()
-            .OrderBy(c => c)
-            .ToListAsync();
+        // зан8: категории из СВОЕЙ таблицы, не надо собирать их по задачам
+        AllCategories = await _db.Categories.OrderBy(c => c.Name).ToListAsync();
+        CategoryOptions = new SelectList(AllCategories, "Id", "Name");
 
         // зан4 зад2: описание пишу через ViewData (словарь ключ -> значение)
         // его можно читать и как ViewBag.Description - ViewBag это не отдельная штука,
@@ -106,7 +108,7 @@ public class TasksModel : PageModel
             Title = NewTask.Title,       // уже обрезан (зан7 зад10)
             IsDone = false,
             CreatedAt = DateTime.Now,    // зан5 зад11: дата создания
-            Category = string.IsNullOrWhiteSpace(NewTask.Category) ? null : NewTask.Category.Trim(),   // дз зан5
+            CategoryId = NewTask.CategoryId,   // зан8 зад5: номер категории из списка
             DueDate = NewTask.DueDate    // дз зан7 (уже проверено атрибутом [MustBeFutureOrToday])
         });
         await _db.SaveChangesAsync();

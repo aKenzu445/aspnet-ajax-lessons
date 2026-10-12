@@ -28,16 +28,14 @@
             <span asp-validation-for="Task.Title" class="field-error"></span>
         </div>
 
-        @* дз зан6: категория - выпадающий список
-           asp-for="Task.Category" - привязка к свойству (и выбор текущего)
-           asp-items - варианты из EditModel.CategoryOptions (заранее заданный список)
-           на серваке проверяет мой атрибут [AllowedCategory] *@
+        @* дз зан6 -> зан8 зад5: категория - выпадающий список из таблицы Categories
+           asp-for="Task.CategoryId" - выбранный Id попадет в Task.CategoryId (текущий будет выбран)
+           asp-items - варианты из EditModel.CategoryOptions. левый Id не сохранится - его отобьет внешний ключ в базе *@
         <div class="form-row">
-            <label asp-for="Task.Category"></label>
-            <select asp-for="Task.Category" asp-items="Model.CategoryOptions">
+            <label asp-for="Task.CategoryId"></label>
+            <select asp-for="Task.CategoryId" asp-items="Model.CategoryOptions">
                 <option value="">Без категории</option>
             </select>
-            <span asp-validation-for="Task.Category" class="field-error"></span>
         </div>
 
         @* дз зан7: срок. из-за [DataType(DataType.Date)] asp-for делает <input type="date">, [MustBeFutureOrToday] проверяется на серваке *@

@@ -12,4 +12,7 @@ public class TaskDbContext : DbContext
 
     // DbSet<TaskItem> - это ТАБЛИЦА Tasks: одна строка = один TaskItem
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+
+    // зан8 зад2: таблица Categories
+    public DbSet<Category> Categories => Set<Category>();
 }

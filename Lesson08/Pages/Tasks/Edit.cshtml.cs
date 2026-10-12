@@ -3,6 +3,7 @@ using Lesson1.WebServer.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;   // SelectList - варианты для <select>
+using Microsoft.EntityFrameworkCore;
 
 namespace Lesson1.WebServer.Pages.Tasks;
 
@@ -22,8 +23,13 @@ public class EditModel : PageModel
     [BindProperty]
     public TaskItem Task { get; set; } = new();
 
-    // дз зан6: варианты для выпадающего списка категорий (из заранее заданного списка)
-    public SelectList CategoryOptions { get; } = new(TaskCategories.All);
+    // дз зан6 -> зан8 зад5: варианты для выпадающего списка категорий, теперь из таблицы Categories (value = Id, текст = Name)
+    public SelectList CategoryOptions { get; set; } = new(Array.Empty<Category>());
+
+    private async Task LoadCategoryOptionsAsync()
+    {
+        CategoryOptions = new SelectList(await _db.Categories.OrderBy(c => c.Name).ToListAsync(), "Id", "Name");
+    }
 
     // GET /Tasks/Edit/5 -> id = 5 (из маршрута {id:int})
     public async Task<IActionResult> OnGetAsync(int id)
@@ -41,6 +47,7 @@ public class EditModel : PageModel
 
         Task = task;
         SetDescription();
+        await LoadCategoryOptionsAsync();
         return Page();   // показать страницу с формой
     }
 
@@ -84,6 +91,7 @@ public class EditModel : PageModel
         if (!ModelState.IsValid)
         {
             SetDescription();
+            await LoadCategoryOptionsAsync();
             return Page();
         }
 
@@ -102,7 +110,7 @@ public class EditModel : PageModel
         existing.Title = Task.Title;
         existing.IsDone = Task.IsDone;
         // дз: категория из списка, "Без категории" (пусто) -> null
-        existing.Category = string.IsNullOrWhiteSpace(Task.Category) ? null : Task.Category;
+        existing.CategoryId = Task.CategoryId;   // зан8: номер категории из списка
         existing.DueDate = Task.DueDate;   // дз зан7: срок
 
         await _db.SaveChangesAsync();   // EF сделает UPDATE тока измененных столбцов

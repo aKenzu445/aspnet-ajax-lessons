@@ -200,15 +200,15 @@ var tasksApi = app.MapGroup("/api/tasks");
 // зан5 зад7: теперь читаю из базы через EF, а не из списка в памяти
 // db (TaskDbContext) asp.net сам подсовывает, я его в Program.cs зарегал
 // async/await чтоб сервак не тупил пока база отвечает, ToListAsync - выполнить и получить список
-// дз зан5: можно фильтр ?category=Работа
-tasksApi.MapGet("/", async (string? category, TaskDbContext db) =>
+// зан8: категория теперь своя таблица, фильтр по номеру ?categoryId=2
+tasksApi.MapGet("/", async (int? categoryId, TaskDbContext db) =>
 {
     // IQueryable - запрос еще НЕ выполнен, можно докидывать условия
     IQueryable<TaskItem> query = db.Tasks;
 
-    if (!string.IsNullOrEmpty(category))
+    if (categoryId.HasValue)   // HasValue - у int? есть значение (не null)
     {
-        query = query.Where(t => t.Category == category);   // LINQ Where -> SQL WHERE
+        query = query.Where(t => t.CategoryId == categoryId);   // LINQ Where -> SQL WHERE
     }
 
     return await query.ToListAsync();   // тока тут запрос реально уходит в базу
@@ -242,7 +242,7 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
         IsDone = false,
         CreatedAt = DateTime.Now,        // зан5 зад11: дата создания
         // дз зан5: пустую категорию сохраняю как null ("без категории")
-        Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim(),
+        CategoryId = request.CategoryId,      // зан8: номер категории (внешний ключ)
         DueDate = request.DueDate?.Date  // дз зан7: срок (тока дата без времени)
     };
 
@@ -259,6 +259,14 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
 
     var results = new List<ValidationResult>();
     bool isValid = Validator.TryValidateObject(created, new ValidationContext(created), results, validateAllProperties: true);
+
+    // зан8: категория с таким номером должна быть
+    // AnyAsync - "есть хоть одна такая строка" (SQL EXISTS)
+    if (created.CategoryId.HasValue && !await db.Categories.AnyAsync(c => c.Id == created.CategoryId))
+    {
+        results.Add(new ValidationResult("Категория не найдена"));
+        isValid = false;
+    }
 
     if (!isValid)
     {
@@ -328,7 +336,8 @@ app.Run();
 public record EchoRequest(string? Text);
 
 // зад9: тело POST /api/tasks
-public record CreateTaskRequest(string? Title, string? Category = null, DateTime? DueDate = null);   // Category - дз зан5, DueDate - дз зан7
+// CategoryId - зан8 (раньше было string? Category из дз зан5), DueDate - дз зан7
+public record CreateTaskRequest(string? Title, int? CategoryId = null, DateTime? DueDate = null);
 
 // дз: тело запроса PUT /api/tasks/{id}
 public record UpdateTaskStatusRequest(bool IsDone);
