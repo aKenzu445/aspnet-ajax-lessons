@@ -29,3 +29,27 @@ GET /api/tasks/1 → 200
 {"id":1,"title":"Изучить ASP.NET","isDone":false,"createdAt":"2026-10-13T00:05:18","categoryId":2,"categoryName":"Учёба","dueDate":null}
 ```
 Без циклов и без `$id/$values`. Категория — **текстом** (`categoryName`), а не вложенным объектом.
+
+## Задача 3. CreateTaskDto и защита от overposting
+
+**Воспроизведение на текущей реализации:**
+```
+POST /api/tasks {"title":"Новая задача","isDone":true,"id":999,"createdAt":"2020-01-01"}
+→ 201 {"id":4,"title":"Новая задача","isDone":false, "createdAt":"2026-10-13T00:05:58", ...}
+```
+Проблема **не воспроизвелась**. С занятия 1 `POST` принимает не сущность `TaskItem`, а отдельный `record CreateTaskRequest(Title, ...)`, по сути уже DTO. В нём не было полей `Id`/`IsDone`/`CreatedAt`, и лишние поля JSON сериализатор просто проигнорировал. Если бы параметр был `TaskItem request`, клиент смог бы задать `IsDone = true` и `CreatedAt` в прошлом (а `Id = 999` — попытку вставить свой ключ).
+При этом **ответ** всё ещё был сущностью (`"category": null` — навигационное свойство «утекло» наружу).
+
+**Сделано:**
+- `Dtos/CreateTaskDto.cs`: `record CreateTaskDto(string? Title, int? CategoryId, DateTime? DueDate)`. `DueDate` — из ДЗ занятия 7.
+- `POST /api/tasks` принимает `CreateTaskDto`. Сервер сам задаёт `IsDone = false`, `CreatedAt = DateTime.Now`, а `Id` выдаёт база.
+- Ответ — `TaskDto`. Категория для `categoryName` подгружается **явной загрузкой** `db.Entry(created).Reference(t => t.Category).LoadAsync()`.
+- Серверная валидация сохранена: `Validator.TryValidateObject` (занятие 7) проверяет задачу, созданную из `CreateTaskDto`. Правила остались в одном месте, в атрибутах `TaskItem`.
+
+**Проверка:**
+```
+POST {"title":"Новая задача","isDone":true,"id":999,"createdAt":"2020-01-01","categoryId":3}
+→ 201 {"id":5,"title":"Новая задача","isDone":false,"createdAt":"2026-10-13T00:06:18","categoryId":3,"categoryName":"Личное",...}
+   IsDone = false (а не true), Id = 5 от базы (а не 999), дата — текущая
+POST {"title":"аб"} → 400 {"errors":["От 3 до 100 символов"]}
+```

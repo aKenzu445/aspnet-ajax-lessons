@@ -240,7 +240,8 @@ tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 
 // --- POST /api/tasks - добавить (зан1 зад9) ---
 // шлю { "title": "Купить хлеб" } -> 201 и созданная задача
-tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
+// зан9 зад3: принимаю CreateTaskDto (там нет Id/IsDone/CreatedAt), отдаю TaskDto
+tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
 {
     // зан5 зад8: создаю БЕЗ Id - база сама даст следующий номер
     var created = new TaskItem
@@ -284,8 +285,12 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
     await db.SaveChangesAsync();     // делаю INSERT в базе, после этого у created уже есть Id
 
-    // 201 Created - создано, в ответе сама задача уже с Id
-    return Results.Json(created, statusCode: StatusCodes.Status201Created);
+    // зан9: для categoryName в ответе подгружаю категорию созданной задачи
+    // Entry(...).Reference(...).LoadAsync() - ЯВНАЯ загрузка одной связанной штуки
+    await db.Entry(created).Reference(t => t.Category).LoadAsync();
+
+    // 201 Created — "ресурс успешно создан", в теле — созданная задача в виде DTO (уже с Id)
+    return Results.Json(TaskDto.FromEntity(created), statusCode: StatusCodes.Status201Created);
 });
 
 // --- DELETE /api/tasks/{id} (зан1 зад10) ---
@@ -343,8 +348,7 @@ app.Run();
 public record EchoRequest(string? Text);
 
 // зад9: тело POST /api/tasks
-// CategoryId - зан8 (раньше было string? Category из дз зан5), DueDate - дз зан7
-public record CreateTaskRequest(string? Title, int? CategoryId = null, DateTime? DueDate = null);
+// (зан9 зад3: CreateTaskRequest поменял на Dtos/CreateTaskDto.cs)
 
 // дз: тело запроса PUT /api/tasks/{id}
 public record UpdateTaskStatusRequest(bool IsDone);
