@@ -42,6 +42,24 @@ public class TasksModel : PageModel
 
         // Post-Redirect-Get (PRG): после POST отвечаю редиректом (302) на GET /Tasks
         // браузер сам перезагрузит страницу, и если нажать F5 - будет безопасный GET, а не повторная отправка формы (дубля не будет)
+                return RedirectToPage();
+    }
+
+    // === зан4 зад5: удаление обычной формой ===
+    // именованный обработчик: OnPost + "Delete". его вызывает форма с asp-page-handler="Delete"
+    // (в адресе ?handler=Delete), так можно несколько OnPost на одной странице
+    // id прилетает из asp-route-id (в адресе &id=3)
+    public IActionResult OnPostDelete(int id)
+    {
+        if (TaskStorage.Delete(id))
+        {
+            TempData["Message"] = $"Задача №{id} удалена";
+        }
+        else
+        {
+            TempData["Error"] = $"Задача №{id} не найдена";
+        }
+
         return RedirectToPage();
     }
 }

@@ -12,4 +12,10 @@
            onchange="toggleTask(@Model.Id, this.checked)">
     <span class="task-title">#@Model.Id @Model.Title</span>
     <button onclick="deleteTask(@Model.Id)">Удалить</button>
+    @* зан4 зад5: обычная кнопка удаления (работает без js)
+       asp-page-handler="Delete" -> вызовется OnPostDelete, asp-route-id -> параметр id
+       тег-хелпер сделает action="/Tasks?id=3&handler=Delete" и добавит токен *@
+    <form method="post" asp-page="/Tasks" asp-page-handler="Delete" asp-route-id="@Model.Id" class="inline-form">
+        <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
+    </form>
 </li>

@@ -95,7 +95,17 @@
                                onchange="toggleTask(${task.id}, this.checked)">
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
                         <button onclick="deleteTask(${task.id})">Удалить</button>
+                        <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
+                            <input type="hidden" name="__RequestVerificationToken" value="${antiforgeryToken()}">
+                            <button type="submit" title="Удалить через обычную форму (с перезагрузкой)">Удалить (форма)</button>
+                        </form>
                     </li>`;
+        }
+
+        // зан4 зад5: для обычной формы удаления в строке которую нарисовал js нужен токен защиты
+        // беру его из любой формы которую сгенерил razor
+        function antiforgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]').value;
         }
 
         async function loadTasks() {

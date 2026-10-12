@@ -191,3 +191,9 @@ h1 {
     color: #b0281b;
     border: 1px solid #f2b8b2;
 }
+
+/* зад5: формочка удаления в одну строку с кнопками */
+.inline-form {
+    display: inline;
+    margin: 0;
+}
