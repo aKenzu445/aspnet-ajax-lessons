@@ -34,6 +34,15 @@ var app = builder.Build();
 // дз зан3: запоминаю когда запустился сервак, для страницы о сервере
 ServerInfo.StartedAt = DateTime.Now;
 
+// зан5 (чтоб удобно запускать): на старте применяю миграции которых еще нет в базе
+// то же самое что "dotnet ef database update". tasks.db в гит не кладу, поэтому после скачивания база создастся сама
+// CreateScope - временная "область" чтоб достать сервисы (DbContext живет в пределах запроса/области)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+    db.Database.Migrate();
+}
+
 // === зан3 зад9: ошибки для обычных страниц сайта ===
 // стоит первым. если страница упала - запрос перекидывается на /Error и юзер видит Pages/Error.cshtml
 app.UseExceptionHandler("/Error");
