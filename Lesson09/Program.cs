@@ -203,8 +203,10 @@ var tasksApi = app.MapGroup("/api/tasks");
 // зан8: категория теперь своя таблица, фильтр по номеру ?categoryId=2
 tasksApi.MapGet("/", async (int? categoryId, TaskDbContext db) =>
 {
-    // IQueryable - запрос еще НЕ выполнен, можно докидывать условия
-    IQueryable<TaskItem> query = db.Tasks;
+    // IQueryable — запрос, который ещё НЕ выполнен; к нему можно добавлять условия
+    // Занятие 9, задача 1: заказчик хочет видеть категорию и в API — добавляем Include,
+    // но по-прежнему возвращаем сущности TaskItem напрямую.
+    IQueryable<TaskItem> query = db.Tasks.Include(t => t.Category);
 
     if (categoryId.HasValue)   // HasValue - у int? есть значение (не null)
     {
