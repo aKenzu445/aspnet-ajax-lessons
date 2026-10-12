@@ -23,7 +23,7 @@ public class StatsModel : PageModel
         UndoneCount = tasks.Count(t => !t.IsDone);
 
         // зад10: описание страницы - по общему правилу в OnGet()
-                ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
+        ViewData["Description"] = "Сколько задач всего, сколько выполнено и сколько осталось";
     }
 
     // === дз зан4: кнопка обновить статистику ===

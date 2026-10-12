@@ -55,7 +55,7 @@ public class TasksModel : PageModel
 
         // Post-Redirect-Get (PRG): после POST отвечаю редиректом (302) на GET /Tasks
         // браузер сам перезагрузит страницу, и если нажать F5 - будет безопасный GET, а не повторная отправка формы (дубля не будет)
-                return RedirectToPage();
+        return RedirectToPage();
     }
 
     // === зан4 зад5: удаление обычной формой ===
