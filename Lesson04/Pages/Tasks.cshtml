@@ -15,6 +15,11 @@
 {
     <div class="alert alert-success">@TempData["Message"]</div>
 }
+@* зан4 зад9: ошибка отдельным красным блоком (alert-error) *@
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-error">@TempData["Error"]</div>
+}
 @* зан4 зад8: эксперимент с TempData.Peek() - читает БЕЗ удаления:
 
        var msg = TempData.Peek("Message");  ...  if (msg != null) { показать msg }
