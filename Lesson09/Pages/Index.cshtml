@@ -48,15 +48,16 @@
    layout выводит её в RenderSection("Scripts"), поэтому этот js попадает ТОКА на эту страницу *@
 @section Scripts {
     <script>
-        // === зад4 ===
-        // по клику делаю GET /api/server-info и кидаю ответ в #result
-        // страница не перезагружается, меняется тока блок
+        // Занятие 9, задача 6: все ошибки API приходят в едином формате { error: { message, code } }
+        // ===== Задача 4 =====
+        // По клику: AJAX-запрос GET /api/server-info, ответ (JSON) выводим в #result.
+        // Страница при этом НЕ перезагружается — меняется только содержимое блока.
         async function loadServerInfo() {
             const response = await fetch("/api/server-info");
             const info = await response.json();
 
             if (!response.ok) {                           // типа 429 или 503
-                document.getElementById("result").innerHTML = `<span class="error">Ошибка ${response.status}: ${info.error}</span>`;
+                document.getElementById("result").innerHTML = `<span class="error">Ошибка ${response.status}: ${info.error.message}</span>`;
                 return;
             }
 
@@ -80,7 +81,7 @@
 
             if (!response.ok) {
                 const error = await response.json().catch(() => null);   // 429/503 тоже приходят с json
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${error?.error ?? "введите оба числа"}</span>`;
+                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${error?.error?.message ?? "введите оба числа"}</span>`;
                 return;
             }
 
@@ -102,7 +103,7 @@
             const data = await response.json();
 
             if (!response.ok) {
-                document.getElementById("echoResult").innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error}</span>`;
+                document.getElementById("echoResult").innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error.message}</span>`;
                 return;
             }
 
@@ -124,7 +125,7 @@
             const resultBlock = document.getElementById("divResult");
 
             if (!response.ok) {
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error}</span>`;
+                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error.message}</span>`;
             } else {
                 resultBlock.innerHTML = `<span class="ok">Результат: <b>${data.result}</b></span>`;
             }

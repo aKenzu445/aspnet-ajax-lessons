@@ -86,3 +86,34 @@ PUT /api/tasks/999 → 404
 GET /api/categories → 200
 [{"id":1,"name":"Работа","taskCount":0},{"id":2,"name":"Учёба","taskCount":3},{"id":3,"name":"Личное","taskCount":1}]
 ```
+
+## Задача 6. Единый формат ошибок во всех endpoints
+
+**Было** (занятия 1–8): `{ "error": "..." }` в одних местах, `{ "errors": [...] }` в других, пустой ответ 404 для неподошедшего маршрута, текст исключения для неверных параметров `/api/sum`.
+
+**Стало:** статический класс `Api/ApiError.cs`. Все ошибки имеют форму
+```json
+{ "error": { "message": "Задача не найдена", "code": "TASK_NOT_FOUND" } }
+```
+Коды: `VALIDATION_ERROR`, `TASK_NOT_FOUND`, `INVALID_PARAMETERS`, `DIVISION_BY_ZERO`, `UNAUTHORIZED`, `TOO_MANY_REQUESTS`, `MAINTENANCE`, `ROUTE_NOT_FOUND`, `INTERNAL_ERROR`.
+
+Что изменено:
+- endpoints `/api/tasks` (GET/POST/PUT/DELETE), `/api/divide` → `ApiError.NotFound/BadRequest/Validation(...)`;
+- middleware: 401 (`ApiKeyMiddleware`), 429 (`RateLimitingMiddleware`), 503 (техработы), 500 (обработчик ошибок) → `ApiError.WriteAsync(...)`;
+- `/api/sum`, `/api/echo` и сломанный JSON в теле: Minimal API бросает `BadHttpRequestException`. Middleware ловит его → 400 `INVALID_PARAMETERS`. Чтобы так было в любом режиме, а не только в Development, включено `RouteHandlerOptions.ThrowOnBadRequest = true`;
+- неизвестный адрес под `/api` (в том числе `/api/tasks/abc`) → `app.MapFallback("/api/{**path}", ...)` → 404 `ROUTE_NOT_FOUND`;
+- JS страниц читает `data.error.message`.
+
+**Проверка (сравнение разных endpoints):**
+```
+GET  /api/tasks/999        → 404 {"error":{"message":"Задача не найдена","code":"TASK_NOT_FOUND"}}
+GET  /api/tasks/abc        → 404 {"error":{"message":"Такого адреса API не существует","code":"ROUTE_NOT_FOUND"}}
+POST /api/tasks без ключа  → 401 {"error":{"message":"Неверный или отсутствующий API-ключ","code":"UNAUTHORIZED"}}
+POST /api/tasks {"title":""} → 400 {"error":{"message":"Название обязательно","code":"VALIDATION_ERROR"}}
+POST сломанный JSON        → 400 {"error":{"message":"Некорректные параметры запроса","code":"INVALID_PARAMETERS"}}
+GET  /api/sum?a=5          → 400 {"error":{"message":"Некорректные параметры запроса","code":"INVALID_PARAMETERS"}}
+GET  /api/divide?a=1&b=0   → 400 {"error":{"message":"Деление на ноль невозможно","code":"DIVISION_BY_ZERO"}}
+GET  /api/crash-test       → 500 {"error":{"message":"Внутренняя ошибка сервера","code":"INTERNAL_ERROR"}}
+X-Maintenance: true        → 503 {"error":{"message":"Сервер временно недоступен, ...","code":"MAINTENANCE"}}
+```
+Структура у всех одинаковая. На странице: «Ошибка 400: Деление на ноль невозможно».

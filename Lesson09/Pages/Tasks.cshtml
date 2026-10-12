@@ -246,10 +246,12 @@
             });
             const data = await response.json();
 
-            // ВТОРОЙ рубеж - сервак. его проверку не убираю: клиентскую можно обойти (postman, выключенный js)
-            // зан7 зад7: ошибки валидации прилетают списком { "errors": [...] }
+            // ВТОРОЙ рубеж — сервер. Его проверку НЕ удаляем: клиентскую можно обойти
+            // (Postman, отключённый JS) или в ней может не оказаться какого-то серверного правила.
+            // Занятие 7, задача 7: ошибки валидации приходили списком { "errors": [...] };
+            // занятие 9, задача 6: теперь ВСЕ ошибки в одном формате { "error": { "message", "code" } }
             if (!response.ok) {
-                showTaskMessage(data.errors ? data.errors.join("; ") : data.error, true);
+                showTaskMessage(data.error.message, true);   // занятие 9: единый формат { error: { message, code } }
                 return;
             }
 
@@ -268,7 +270,7 @@
             const data = await response.json();
 
             if (!response.ok) {                       // 404 - задачи уже нет
-                showTaskMessage(data.error, true);
+                showTaskMessage(data.error.message, true);
             } else {
                 showTaskMessage(data.message, false);
             }
@@ -298,7 +300,7 @@
                 // ошибка (типа 404 - задачу уже удалили): возвращаю галку назад
                 const data = await response.json().catch(() => null);
                 checkbox.checked = !isDone;
-                showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+                showTaskMessage(data?.error?.message ?? `Ошибка ${response.status}`, true);
                 return;
             }
 
@@ -318,7 +320,7 @@
             if (!response.ok) {
                 // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
                 const data = await response.json().catch(() => null);
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error ?? "Задача не найдена"}</span>`;
+                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error?.message ?? "Задача не найдена"}</span>`;
                 return;
             }
 

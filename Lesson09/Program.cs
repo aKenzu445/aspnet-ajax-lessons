@@ -6,6 +6,7 @@ using System.Text.Encodings.Web;   // TextEncoderSettings (кириллица в
 using System.Text.Unicode;         // UnicodeRanges
 using Microsoft.Extensions.WebEncoders; // WebEncoderOptions
 using Microsoft.EntityFrameworkCore;   // UseSqlite, ToListAsync и тд (зан5)
+using Lesson1.WebServer.Api;      // ApiError - общий формат ошибок (зан9)
 using Lesson1.WebServer.Data;     // TaskDbContext - база, ServerInfo (папка Data)
 using Lesson1.WebServer.Dtos;     // DTO для api (зан9)
 using Lesson1.WebServer.Middleware; // ApiKeyMiddleware (папка Middleware)
@@ -17,6 +18,10 @@ var builder = WebApplication.CreateBuilder(args);
 // === зан3 зад1: подключаю razor pages ===
 // AddRazorPages регает всё что нужно чтоб .cshtml превращались в html
 builder.Services.AddRazorPages();
+
+// зан9 зад6: если параметры кривые (?a=abc для double, сломанный json) minimal api всегда кидает BadHttpRequestException,
+// а мой middleware делает из него 400 в общем формате. без этой настройки вне Development был бы пустой 400
+builder.Services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = true);
 
 // === зан5 зад4: регаю DbContext в DI ===
 // AddDbContext - asp.net сам создает TaskDbContext на каждый запрос и отдает куда надо (endpoint или PageModel)
@@ -59,6 +64,14 @@ app.Use(async (context, next) =>
     {
         await next();
     }
+    // зан9 зад6: кривой запрос (не тот тип параметра, сломанный json)
+    // minimal api сообщает об этом через BadHttpRequestException (см. ThrowOnBadRequest выше)
+    catch (BadHttpRequestException ex) when (context.Request.Path.StartsWithSegments("/api") && !context.Response.HasStarted)
+    {
+        Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Некорректный запрос {context.Request.Path}: {ex.Message}");
+        context.Response.Clear();
+        await ApiError.WriteAsync(context, StatusCodes.Status400BadRequest, "Некорректные параметры запроса", ApiError.InvalidParameters);
+    }
     catch (Exception ex) when (context.Request.Path.StartsWithSegments("/api"))
     {
         // полная инфа об ошибке - тока в консоль сервака, для меня
@@ -72,8 +85,8 @@ app.Use(async (context, next) =>
         }
 
         context.Response.Clear();
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;   // 500
-        await context.Response.WriteAsJsonAsync(new { error = "Внутренняя ошибка сервера" });
+        // 500 в общем формате (зан9 зад6)
+        await ApiError.WriteAsync(context, StatusCodes.Status500InternalServerError, "Внутренняя ошибка сервера", ApiError.InternalError);
     }
 });
 
@@ -108,8 +121,9 @@ app.Use(async (context, next) =>
 {
     if (context.Request.Headers["X-Maintenance"] == "true")
     {
-        context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;   // 503
-        await context.Response.WriteAsJsonAsync(new { error = "Сервер временно недоступен, ведутся технические работы" });
+        // 503 в общем формате (зан9 зад6)
+        await ApiError.WriteAsync(context, StatusCodes.Status503ServiceUnavailable,
+            "Сервер временно недоступен, ведутся технические работы", ApiError.Maintenance);
         return;   // next() НЕ зову - дальше запрос не идет
     }
 
@@ -181,12 +195,12 @@ app.MapGet("/api/divide", (string? a, string? b) =>
 
     if (!aOk || !bOk)   // ! - "не", || - "или"
     {
-        return Results.BadRequest(new { Error = "Некорректные параметры" });   // 400
+        return ApiError.BadRequest("Некорректные параметры", ApiError.InvalidParameters);   // 400
     }
 
     if (y == 0)
     {
-        return Results.BadRequest(new { Error = "Деление на ноль невозможно" }); // 400
+        return ApiError.BadRequest("Деление на ноль невозможно", ApiError.DivisionByZero);  // 400
     }
 
     return Results.Ok(new { Result = x / y });                                  // 200
@@ -232,7 +246,7 @@ tasksApi.MapGet("/{id:int}", async (int id, TaskDbContext db) =>
 
     if (task == null)
     {
-        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+        return ApiError.NotFound("Задача не найдена", ApiError.TaskNotFound);   // 404
     }
 
     return Results.Ok(TaskDto.FromEntity(task));                            // 200
@@ -262,7 +276,7 @@ tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
     // зан7 зад10: название уже обрезано Trim() выше, длина считается по реальному значению
     if (string.IsNullOrWhiteSpace(created.Title))
     {
-        return Results.BadRequest(new { Errors = new[] { "Название обязательно" } });
+        return ApiError.Validation(new[] { "Название обязательно" });
     }
 
     var results = new List<ValidationResult>();
@@ -279,7 +293,7 @@ tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
     if (!isValid)
     {
         // 400 и список ошибок: { "errors": ["Название обязательно", ...] }
-        return Results.BadRequest(new { Errors = results.Select(r => r.ErrorMessage) });
+        return ApiError.Validation(results.Select(r => r.ErrorMessage));   // 400 VALIDATION_ERROR
     }
 
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
@@ -301,7 +315,7 @@ tasksApi.MapDelete("/{id:int}", async (int id, TaskDbContext db) =>
 
     if (task == null)
     {
-        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+        return ApiError.NotFound("Задача не найдена", ApiError.TaskNotFound);   // 404
     }
 
     db.Tasks.Remove(task);           // помечаю на удаление
@@ -318,7 +332,7 @@ tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskDto request, TaskDbContext
 
     if (task == null)
     {
-        return Results.NotFound(new { Error = "Задача не найдена" });       // 404
+        return ApiError.NotFound("Задача не найдена", ApiError.TaskNotFound);   // 404
     }
 
     // проверяю ТОКА то что меняется. TryValidateProperty гоняет атрибуты одного свойства (Title)
@@ -337,7 +351,7 @@ tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskDto request, TaskDbContext
 
     if (!isValid)
     {
-        return Results.BadRequest(new { Errors = results.Select(r => r.ErrorMessage) });
+        return ApiError.Validation(results.Select(r => r.ErrorMessage));   // 400 VALIDATION_ERROR
     }
 
     task.Title = title;              // EF следит за изменениями загруженного объекта...
@@ -357,6 +371,11 @@ app.MapGet("/api/categories", async (TaskDbContext db) =>
         .OrderBy(c => c.Id)
         .Select(c => new CategoryDto(c.Id, c.Name, c.Tasks.Count()))
         .ToListAsync());
+
+// === зан9 зад6: левый адрес api -> 404 в общем формате ===
+// MapFallback срабатывает тока если ни один маршрут не подошел (типа /api/tasks/abc из-за {id:int})
+app.MapFallback("/api/{**path}", () =>
+    ApiError.NotFound("Такого адреса API не существует", ApiError.RouteNotFound));
 
 // === зан3 зад1: маршруты для всех razor страниц из Pages ===
 // адрес берется из имени файла: Pages/Test.cshtml -> /Test, Pages/Index.cshtml -> /

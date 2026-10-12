@@ -1,3 +1,5 @@
+using Lesson1.WebServer.Api;
+
 namespace Lesson1.WebServer.Middleware;
 
 // === дз зан2: ограничение частоты запросов (rate limiting) ===
@@ -61,11 +63,10 @@ public class RateLimitingMiddleware
 
         if (tooMany)
         {
-            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;   // 429
-            await context.Response.WriteAsJsonAsync(new
-            {
-                error = $"Слишком много запросов: не больше {_maxRequests} за {_windowSeconds} секунд. Подождите немного."
-            });
+            // 429 в общем формате (зан9 зад6)
+            await ApiError.WriteAsync(context, StatusCodes.Status429TooManyRequests,
+                $"Слишком много запросов: не больше {_maxRequests} за {_windowSeconds} секунд. Подождите немного.",
+                ApiError.TooManyRequests);
             return;
         }
 

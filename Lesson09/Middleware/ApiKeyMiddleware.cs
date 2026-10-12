@@ -1,3 +1,5 @@
+using Lesson1.WebServer.Api;
+
 namespace Lesson1.WebServer.Middleware;
 
 // === зан2 зад7: простая авторизация по api ключу ===
@@ -33,8 +35,9 @@ public class ApiKeyMiddleware
 
             if (key != SecretKey)
             {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;   // 401
-                await context.Response.WriteAsJsonAsync(new { error = "Неверный или отсутствующий API-ключ" });
+                // 401 в общем формате (зан9 зад6)
+                await ApiError.WriteAsync(context, StatusCodes.Status401Unauthorized,
+                    "Неверный или отсутствующий API-ключ", ApiError.Unauthorized);
                 return;   // next() НЕ зову - запрос дальше не идет, endpoint не выполнится
             }
         }
