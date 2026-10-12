@@ -31,4 +31,12 @@ public class TaskItem
     [Display(Name = "Категория")]
     [AllowedCategory]
     public string? Category { get; set; }
+
+    // дз зан7: срок (дедлайн), необязательный. DateTime? - дата которой может не быть (null)
+    // [DataType(DataType.Date)] - asp-for нарисует <input type="date">
+    // [MustBeFutureOrToday] - мой атрибут: дата не в прошлом
+    [Display(Name = "Срок")]
+    [DataType(DataType.Date)]
+    [MustBeFutureOrToday]
+    public DateTime? DueDate { get; set; }
 }

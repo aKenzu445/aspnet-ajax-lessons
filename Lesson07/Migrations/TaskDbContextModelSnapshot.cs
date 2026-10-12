@@ -29,6 +29,9 @@ namespace Lesson1.WebServer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDone")
                         .HasColumnType("INTEGER");
 

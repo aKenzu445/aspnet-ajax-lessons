@@ -1,38 +1,61 @@
-### Проверки занятия 6. Запусти проект занятия 6 (▶). Адрес: http://localhost:5107
-### Формы редактирования удобнее проверять в браузере (нужен анти-подделочный токен).
+### Проверки занятия 7 (валидация). Запусти проект занятия 7 (▶). Адрес: http://localhost:5107
+### Здесь — проверки СЕРВЕРНОЙ валидации API в обход сайта (как тестировщик с Postman).
 
 @host = http://localhost:5107
 @key = lesson2-secret
 
-### Подготовка: создать задачу
+### Задача 7: пустое название → 400 {"errors":["Название обязательно"]}
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Изучитьт ASP.NET" }
+{ "title": "" }
 
-### Задачи 2–4: страница редактирования (форма предзаполнена)
-GET {{host}}/Tasks/Edit/1
-
-### Задача 2: не число → 404
-GET {{host}}/Tasks/Edit/abc
-
-### Задача 9: отметить выполненной → 200 { ..., "isDone": true }
-PUT {{host}}/api/tasks/1
+### Задачи 5, 7: запрещённое слово → 400
+POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "isDone": true }
+{ "title": "Тестовая задача" }
 
-### Задача 9: повторный GET подтверждает изменение
-GET {{host}}/api/tasks/1
-
-### Задача 9: несуществующая задача → 404
-PUT {{host}}/api/tasks/999
+### Задача 4: короче 3 символов → 400
+POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "isDone": true }
+{ "title": "аб" }
 
-### Задача 10: несуществующая задача на странице редактирования → 302 на /Tasks с сообщением
-GET {{host}}/Tasks/Edit/999
+### Задача 10: только пробелы → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "   " }
+
+### Задача 10: пробелы по краям не обманывают минимальную длину → 400
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "  аб  " }
+
+### ДЗ: срок в прошлом → 400 {"errors":["Срок не может быть в прошлом"]}
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Задача со сроком", "dueDate": "2020-01-01" }
+
+### ДЗ: срок в будущем → 201
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Задача со сроком", "dueDate": "2030-01-01" }
+
+### Корректные данные → 201
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "Корректная задача", "category": "Работа" }

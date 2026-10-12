@@ -106,7 +106,8 @@ public class TasksModel : PageModel
             Title = NewTask.Title,       // уже обрезан (зан7 зад10)
             IsDone = false,
             CreatedAt = DateTime.Now,    // зан5 зад11: дата создания
-            Category = string.IsNullOrWhiteSpace(NewTask.Category) ? null : NewTask.Category.Trim()   // дз зан5
+            Category = string.IsNullOrWhiteSpace(NewTask.Category) ? null : NewTask.Category.Trim(),   // дз зан5
+            DueDate = NewTask.DueDate    // дз зан7 (уже проверено атрибутом [MustBeFutureOrToday])
         });
         await _db.SaveChangesAsync();
 

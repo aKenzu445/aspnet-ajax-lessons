@@ -84,6 +84,7 @@
                 <option value="@c">@c</option>
             }
         </select>
+        <input id="newTaskDueDate" type="date" title="Срок (необязательно)">
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
 
@@ -100,8 +101,11 @@
             <select asp-for="NewTask.Category" asp-items="new SelectList(TaskCategories.All)">
                 <option value="">Без категории</option>
             </select>
+            @* дз зан7: срок (type="date" из-за [DataType(DataType.Date)]) *@
+            <input asp-for="NewTask.DueDate" title="Срок (необязательно)" />
             <button type="submit">Добавить (с перезагрузкой)</button>
             <div><span asp-validation-for="NewTask.Title" class="field-error"></span></div>
+            <div><span asp-validation-for="NewTask.DueDate" class="field-error"></span></div>
         </form>
 
         <!-- зан2 зад4: найти задачу по id -->
@@ -143,6 +147,7 @@
                         <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
                         ${task.category ? `<span class="task-category">${escapeHtml(task.category)}</span>` : ""}
                         <span class="task-date">${formatCreatedAt(task.createdAt)}</span>
+                        ${task.dueDate ? `<span class="task-due">срок: ${task.dueDate.substring(8, 10)}.${task.dueDate.substring(5, 7)}.${task.dueDate.substring(0, 4)}</span>` : ""}
                         <a href="/Tasks/Edit/${task.id}" class="button-link">Редактировать</a>
                         <button onclick="deleteTask(${task.id})">Удалить</button>
                         <form method="post" action="/Tasks?id=${task.id}&handler=Delete" class="inline-form">
@@ -224,7 +229,9 @@
                 headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
                 body: JSON.stringify({
                     title: input.value,
-                    category: document.getElementById("newTaskCategory").value   // дз зан5
+                    category: document.getElementById("newTaskCategory").value,   // дз зан5
+                    // дз зан7: "2026-10-20" или null если дату не выбрали
+                    dueDate: document.getElementById("newTaskDueDate").value || null
                 })
             });
             const data = await response.json();

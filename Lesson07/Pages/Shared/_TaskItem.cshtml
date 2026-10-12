@@ -18,6 +18,11 @@
     }
     @* зан5 зад11: дата создания. у задач созданных ДО миграции AddCreatedAt в базе 0001-01-01 (default) - пишу "дата неизвестна" *@
     <span class="task-date">@(Model.CreatedAt == default ? "дата неизвестна" : Model.CreatedAt.ToString("dd.MM.yyyy HH:mm"))</span>
+    @* дз зан7: срок, если есть *@
+    @if (Model.DueDate != null)
+    {
+        <span class="task-due">срок: @Model.DueDate.Value.ToString("dd.MM.yyyy")</span>
+    }
     @* зан6 зад6: ссылка на редактирование. asp-page + asp-route-id сами делают href="/Tasks/Edit/3" *@
     <a asp-page="/Tasks/Edit" asp-route-id="@Model.Id" class="button-link">Редактировать</a>
     <button onclick="deleteTask(@Model.Id)">Удалить</button>

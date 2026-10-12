@@ -242,7 +242,8 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
         IsDone = false,
         CreatedAt = DateTime.Now,        // зан5 зад11: дата создания
         // дз зан5: пустую категорию сохраняю как null ("без категории")
-        Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim()
+        Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim(),
+        DueDate = request.DueDate?.Date  // дз зан7: срок (тока дата без времени)
     };
 
     // === зан7 зад7: проверка в minimal api ===
@@ -327,7 +328,7 @@ app.Run();
 public record EchoRequest(string? Text);
 
 // зад9: тело POST /api/tasks
-public record CreateTaskRequest(string? Title, string? Category = null);   // Category - дз зан5
+public record CreateTaskRequest(string? Title, string? Category = null, DateTime? DueDate = null);   // Category - дз зан5, DueDate - дз зан7
 
 // дз: тело запроса PUT /api/tasks/{id}
 public record UpdateTaskStatusRequest(bool IsDone);

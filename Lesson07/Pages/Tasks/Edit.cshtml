@@ -40,6 +40,13 @@
             <span asp-validation-for="Task.Category" class="field-error"></span>
         </div>
 
+        @* дз зан7: срок. из-за [DataType(DataType.Date)] asp-for делает <input type="date">, [MustBeFutureOrToday] проверяется на серваке *@
+        <div class="form-row">
+            <label asp-for="Task.DueDate"></label>
+            <input asp-for="Task.DueDate" />
+            <span asp-validation-for="Task.DueDate" class="field-error"></span>
+        </div>
+
         <div class="form-row">
             <label>
                 @* для bool asp-for делает checkbox и ставит checked если IsDone == true *@

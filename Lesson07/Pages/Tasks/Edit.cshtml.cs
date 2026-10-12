@@ -103,6 +103,7 @@ public class EditModel : PageModel
         existing.IsDone = Task.IsDone;
         // дз: категория из списка, "Без категории" (пусто) -> null
         existing.Category = string.IsNullOrWhiteSpace(Task.Category) ? null : Task.Category;
+        existing.DueDate = Task.DueDate;   // дз зан7: срок
 
         await _db.SaveChangesAsync();   // EF сделает UPDATE тока измененных столбцов
 

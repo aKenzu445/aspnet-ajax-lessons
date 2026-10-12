@@ -278,3 +278,10 @@ input.input-validation-error {
 .validation-summary-valid {
     display: none;
 }
+
+/* дз зан7: срок задачи */
+.task-due {
+    color: #a05a00;
+    font-size: 12px;
+    white-space: nowrap;
+}
