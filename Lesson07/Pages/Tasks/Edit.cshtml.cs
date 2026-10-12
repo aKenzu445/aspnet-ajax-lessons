@@ -55,17 +55,27 @@ public class EditModel : PageModel
     // POST /Tasks/Edit/5. Task уже заполнен из формы благодаря [BindProperty]
     public async Task<IActionResult> OnPostAsync()
     {
-        // ===== Занятие 6, задача 7. Серверная валидация =====
-        // ModelState — результат привязки и проверки атрибутов [Required], [StringLength]...
-        // Если есть ошибки — НЕ сохраняем и снова показываем ту же форму (без редиректа):
-        // введённые значения остаются в полях, а asp-validation-for выводит текст ошибки.
-        // ===== Занятие 7, задача 9. Правило уровня ВСЕЙ формы (зависит от двух полей) =====
-        // Если задача отмечена выполненной, у неё обязательно должно быть название.
-        // Это ошибка не одного поля, а формы целиком, поэтому ключ — пустая строка "".
-        // Такие ошибки выводит <div asp-validation-summary="All"> (сводка ошибок),
-        // а не <span asp-validation-for> у конкретного поля.
-        // Проверка стоит ДО return Page(): если Title пустой, ModelState уже невалиден
-        // из-за [Required], и иначе до этой строки мы бы не дошли.
+        // === зан6 зад7: проверка на серваке ===
+        // ModelState - результат проверки атрибутов [Required], [StringLength]...
+        // есть ошибки - НЕ сохраняю и показываю ту же форму без редиректа, asp-validation-for пишет ошибку
+        // === зан7 зад10: пробелы по краям - сначала Trim() потом проверяю заново ===
+        // (без этого "  аб  " сохранялось с пробелами и проходило минимум 3 символа)
+        Task.Title = (Task.Title ?? "").Trim();
+        ModelState.ClearValidationState(nameof(Task));
+        if (string.IsNullOrWhiteSpace(Task.Title))
+        {
+            ModelState.AddModelError("Task.Title", "Название обязательно");
+        }
+        else
+        {
+            TryValidateModel(Task, nameof(Task));
+        }
+
+        // === зан7 зад9: правило на всю форму (зависит от двух полей) ===
+        // если задача выполнена - у нее обязано быть название
+        // это ошибка не одного поля а всей формы, поэтому ключ пустой ""
+        // такие ошибки показывает <div asp-validation-summary="All">, а не <span asp-validation-for>
+        // проверка стоит ДО return Page(): при пустом Title ModelState уже кривой из-за [Required] и сюда бы не дошли
         if (Task.IsDone && string.IsNullOrWhiteSpace(Task.Title))
         {
             ModelState.AddModelError("", "Нельзя отметить выполненной задачу без названия");

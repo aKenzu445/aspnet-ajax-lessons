@@ -245,12 +245,17 @@ tasksApi.MapPost("/", async (CreateTaskRequest request, TaskDbContext db) =>
         Category = string.IsNullOrWhiteSpace(request.Category) ? null : request.Category.Trim()
     };
 
-    // ===== Занятие 7, задача 7. Серверная валидация в Minimal API =====
-    // Minimal API НЕ проверяет атрибуты [Required], [StringLength], [NoForbiddenWords]...
-    // автоматически (это делает только ModelState в Razor Pages/MVC). Поэтому проверяем вручную:
-    // Validator.TryValidateObject прогоняет ВСЕ атрибуты объекта и складывает ошибки в results.
-    // Правила те же, что у Razor-страниц: они записаны один раз — в классе TaskItem.
-    // (Ручная проверка IsNullOrWhiteSpace из занятия 1 больше не нужна: её заменил [Required].)
+    // === зан7 зад7: проверка в minimal api ===
+    // minimal api сам НЕ проверяет атрибуты [Required], [StringLength], [NoForbiddenWords] (это тока ModelState в razor/mvc)
+    // поэтому руками: Validator.TryValidateObject гонит все атрибуты и кидает ошибки в results
+    // правила те же что у razor страниц, написаны один раз - в TaskItem
+    // (ручная проверка IsNullOrWhiteSpace из зан1 больше не нужна, её заменил [Required])
+    // зан7 зад10: название уже обрезано Trim() выше, длина считается по реальному значению
+    if (string.IsNullOrWhiteSpace(created.Title))
+    {
+        return Results.BadRequest(new { Errors = new[] { "Название обязательно" } });
+    }
+
     var results = new List<ValidationResult>();
     bool isValid = Validator.TryValidateObject(created, new ValidationContext(created), results, validateAllProperties: true);
 

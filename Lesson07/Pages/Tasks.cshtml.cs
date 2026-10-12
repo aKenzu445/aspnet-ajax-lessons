@@ -80,7 +80,20 @@ public class TasksModel : PageModel
     {
         // зан6 зад8: та же проверка что на странице редактирования (зад7) - по атрибутам TaskItem
         // ошибка - показываю страницу сразу (без редиректа), текст ошибки у поля
-        // (в зан4 зад9 тут была ручная проверка IsNullOrWhiteSpace + TempData["Error"])
+        // === зан7 зад10: пробелы по краям ===
+        // атрибуты проверили ДО обрезки: "  аб  " (6 символов) прошло MinimumLength = 3, а сохранилось бы "аб"
+        // поэтому сначала Trim(), потом проверяю заново
+        NewTask.Title = (NewTask.Title ?? "").Trim();
+        ModelState.ClearValidationState(nameof(NewTask));        // забыть результаты проверки до Trim
+        if (string.IsNullOrWhiteSpace(NewTask.Title))            // своя проверка "пусто после Trim"
+        {
+            ModelState.AddModelError("NewTask.Title", "Название обязательно");
+        }
+        else
+        {
+            TryValidateModel(NewTask, nameof(NewTask));         // проверяю все атрибуты еще раз
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadPageDataAsync(null);
@@ -90,7 +103,7 @@ public class TasksModel : PageModel
         // зан5 зад10: сохраняю в базу (Id даст база)
         _db.Tasks.Add(new TaskItem
         {
-            Title = NewTask.Title.Trim(),
+            Title = NewTask.Title,       // уже обрезан (зан7 зад10)
             IsDone = false,
             CreatedAt = DateTime.Now,    // зан5 зад11: дата создания
             Category = string.IsNullOrWhiteSpace(NewTask.Category) ? null : NewTask.Category.Trim()   // дз зан5
