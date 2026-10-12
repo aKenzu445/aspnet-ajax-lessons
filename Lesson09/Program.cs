@@ -303,8 +303,10 @@ tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
     // Entry(...).Reference(...).LoadAsync() - ЯВНАЯ загрузка одной связанной штуки
     await db.Entry(created).Reference(t => t.Category).LoadAsync();
 
-    // 201 Created — "ресурс успешно создан", в теле — созданная задача в виде DTO (уже с Id)
-    return Results.Json(TaskDto.FromEntity(created), statusCode: StatusCodes.Status201Created);
+    // === зан9 зад7: REST - 201 Created + заголовок Location ===
+    // Results.Created сам ставит 201 и Location: /api/tasks/15 - где лежит созданная задача, в теле DTO
+    // (раньше было Results.Json(..., 201) - код норм, но без Location)
+    return Results.Created($"/api/tasks/{created.Id}", TaskDto.FromEntity(created));
 });
 
 // --- DELETE /api/tasks/{id} (зан1 зад10) ---
@@ -321,7 +323,8 @@ tasksApi.MapDelete("/{id:int}", async (int id, TaskDbContext db) =>
     db.Tasks.Remove(task);           // помечаю на удаление
     await db.SaveChangesAsync();     // делаю DELETE в базе
 
-    return Results.Ok(new { Message = $"Задача №{id} удалена" });           // 200
+    // зан9 зад7: по REST успешное удаление - 204 No Content без тела (раньше было 200 и { "message": "..." })
+    return Results.NoContent();                                             // 204
 });
 
 // --- PUT /api/tasks/{id} (дз зан1 -> зан9 зад4) ---

@@ -117,3 +117,20 @@ GET  /api/crash-test       → 500 {"error":{"message":"Внутренняя о�
 X-Maintenance: true        → 503 {"error":{"message":"Сервер временно недоступен, ...","code":"MAINTENANCE"}}
 ```
 Структура у всех одинаковая. На странице: «Ошибка 400: Деление на ноль невозможно».
+
+## Задача 7. Ревизия REST-конвенций: 201 + Location, 204
+
+- `POST /api/tasks`: `Results.Json(..., statusCode: 201)` → **`Results.Created($"/api/tasks/{created.Id}", dto)`**. Код тот же (201), но теперь есть заголовок **`Location`** — ссылка на созданный ресурс.
+- `DELETE /api/tasks/{id}`: было **200** + `{ "message": "Задача №N удалена" }` → стало **`204 No Content`** (`Results.NoContent()`), без тела. JS удаления больше не читает `response.json()` при успехе (тела нет), а сообщение формирует сам.
+- Остальные: `GET` → 200, `PUT` → 200 + обновлённый DTO (по конвенции допустим 200 с телом или 204), ошибки — 400/401/404/429/500/503 в едином формате (задача 6).
+
+**Проверка:**
+```
+POST /api/tasks {"title":"Проверить Location","categoryId":1}
+→ HTTP/1.1 201 Created
+  Location: /api/tasks/6
+  {"id":6,"title":"Проверить Location",...,"categoryName":"Работа"}
+GET /api/tasks/6 (адрес из Location) → 200 та же задача
+DELETE /api/tasks/6 → HTTP/1.1 204 No Content
+```
+В Rider HTTP Client заголовки ответа видны в панели результата (аналог вкладки Headers в Postman).

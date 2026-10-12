@@ -267,12 +267,13 @@
                 method: "DELETE",
                 headers: { "X-Api-Key": API_KEY }
             });
-            const data = await response.json();
-
+            // Занятие 9, задача 7: при успехе сервер отвечает 204 No Content — тела нет,
+            // поэтому response.json() вызываем ТОЛЬКО для ошибки
             if (!response.ok) {                       // 404 - задачи уже нет
+                const data = await response.json();
                 showTaskMessage(data.error.message, true);
             } else {
-                showTaskMessage(data.message, false);
+                showTaskMessage(`Задача №${id} удалена`, false);
             }
             await loadTasks();
         }
