@@ -31,137 +31,141 @@
         <div id="findTaskResult" class="result"></div>
     </section>
 
-<script>
-    // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
-    const API_KEY = "lesson2-secret";
+@* зад7: скрипт для списка задач - в section Scripts
+   layout выводит её в RenderSection("Scripts"), поэтому этот js попадает ТОКА на эту страницу *@
+@section Scripts {
+    <script>
+        // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
+        const API_KEY = "lesson2-secret";
 
-    // === зад8: грузим список задач ===
+        // === зад8: грузим список задач ===
 
-    // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
-    function escapeHtml(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // разметка одной строки списка
-    // зан3 зад6: ТА ЖЕ разметка что в partial Pages/Shared/_TaskItem.cshtml
-    // partial работает на серваке и js не может его вызвать при добавлении через ajax,
-    // поэтому тут собираю строку руками (клиентский рендеринг)
-    function taskToHtml(task) {
-        return `<li class="${task.isDone ? "done" : ""}">
-                    <input type="checkbox" ${task.isDone ? "checked" : ""}
-                           onchange="toggleTask(${task.id}, this.checked)">
-                    <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
-                    <button onclick="deleteTask(${task.id})">Удалить</button>
-                </li>`;
-    }
-
-    async function loadTasks() {
-        const response = await fetch("/api/tasks");
-
-        // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
-        if (!response.ok) {
-            const data = await response.json().catch(() => null);
-            showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
-            return;
+        // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        const tasks = await response.json();          // массив задач
-
-        const list = document.getElementById("taskList");
-        list.innerHTML = "";
-        for (const task of tasks) {
-            list.innerHTML += taskToHtml(task);
-        }
-    }
-
-    document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
-
-    // сообщение под списком (ошибка красным)
-    function showTaskMessage(text, isError) {
-        document.getElementById("taskMessage").innerHTML =
-            text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
-    }
-
-    // === зад9: добавить задачу ===
-    // после POST заново тяну весь список. почему: правда тока на сервере,
-    // так на экране точно то что сохранено (с норм Id) + видно чужие задачи
-    // минус - лишний запрос, но для мелкого списка пофиг
-    document.getElementById("addTaskBtn").addEventListener("click", async () => {
-        const input = document.getElementById("newTaskTitle");
-
-        const response = await fetch("/api/tasks", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-            body: JSON.stringify({ title: input.value })
-        });
-        const data = await response.json();
-
-        if (!response.ok) {                       // 400 - пустое название
-            showTaskMessage(data.error, true);
-            return;
+        // разметка одной строки списка
+        // зан3 зад6: ТА ЖЕ разметка что в partial Pages/Shared/_TaskItem.cshtml
+        // partial работает на серваке и js не может его вызвать при добавлении через ajax,
+        // поэтому тут собираю строку руками (клиентский рендеринг)
+        function taskToHtml(task) {
+            return `<li class="${task.isDone ? "done" : ""}">
+                        <input type="checkbox" ${task.isDone ? "checked" : ""}
+                               onchange="toggleTask(${task.id}, this.checked)">
+                        <span class="task-title">#${task.id} ${escapeHtml(task.title)}</span>
+                        <button onclick="deleteTask(${task.id})">Удалить</button>
+                    </li>`;
         }
 
-        input.value = "";
-        showTaskMessage(`Задача №${data.id} добавлена`, false);
-        await loadTasks();                        // обновляю список без перезагрузки
-    });
+        async function loadTasks() {
+            const response = await fetch("/api/tasks");
 
-    // === зад10: удаление ===
-    // вызывается кнопкой Удалить (onclick в строке)
-    async function deleteTask(id) {
-        const response = await fetch(`/api/tasks/${id}`, {
-            method: "DELETE",
-            headers: { "X-Api-Key": API_KEY }
-        });
-        const data = await response.json();
+            // дз зан2: сервак может ответить 429 (слишком часто) или 503 (техработы)
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                showTaskMessage(data?.error ?? `Ошибка ${response.status}`, true);
+                return;
+            }
 
-        if (!response.ok) {                       // 404 - задачи уже нет
-            showTaskMessage(data.error, true);
-        } else {
-            showTaskMessage(data.message, false);
+            const tasks = await response.json();          // массив задач
+
+            const list = document.getElementById("taskList");
+            list.innerHTML = "";
+            for (const task of tasks) {
+                list.innerHTML += taskToHtml(task);
+            }
         }
-        await loadTasks();
-    }
 
-    // === дз: чекбокс выполнено ===
-    // this.checked - стоит галка после клика или нет
-    async function toggleTask(id, isDone) {
-        const response = await fetch(`/api/tasks/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-            body: JSON.stringify({ isDone: isDone })
-        });
+        document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
 
-        if (!response.ok) {
+        // сообщение под списком (ошибка красным)
+        function showTaskMessage(text, isError) {
+            document.getElementById("taskMessage").innerHTML =
+                text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
+        }
+
+        // === зад9: добавить задачу ===
+        // после POST заново тяну весь список. почему: правда тока на сервере,
+        // так на экране точно то что сохранено (с норм Id) + видно чужие задачи
+        // минус - лишний запрос, но для мелкого списка пофиг
+        document.getElementById("addTaskBtn").addEventListener("click", async () => {
+            const input = document.getElementById("newTaskTitle");
+
+            const response = await fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                body: JSON.stringify({ title: input.value })
+            });
             const data = await response.json();
-            showTaskMessage(data.error, true);
+
+            if (!response.ok) {                       // 400 - пустое название
+                showTaskMessage(data.error, true);
+                return;
+            }
+
+            input.value = "";
+            showTaskMessage(`Задача №${data.id} добавлена`, false);
+            await loadTasks();                        // обновляю список без перезагрузки
+        });
+
+        // === зад10: удаление ===
+        // вызывается кнопкой Удалить (onclick в строке)
+        async function deleteTask(id) {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: "DELETE",
+                headers: { "X-Api-Key": API_KEY }
+            });
+            const data = await response.json();
+
+            if (!response.ok) {                       // 404 - задачи уже нет
+                showTaskMessage(data.error, true);
+            } else {
+                showTaskMessage(data.message, false);
+            }
+            await loadTasks();
         }
-        await loadTasks();                        // перерисовать: выполненные зачеркнуты
-    }
 
-    // === зан2 зад4: найти задачу по id ===
-    document.getElementById("findTaskBtn").addEventListener("click", async () => {
-        const id = document.getElementById("findTaskId").value;
-        const resultBlock = document.getElementById("findTaskResult");
+        // === дз: чекбокс выполнено ===
+        // this.checked - стоит галка после клика или нет
+        async function toggleTask(id, isDone) {
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
+                body: JSON.stringify({ isDone: isDone })
+            });
 
-        const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
-
-        if (!response.ok) {
-            // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
-            const data = await response.json().catch(() => null);
-            resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error ?? "Задача не найдена"}</span>`;
-            return;
+            if (!response.ok) {
+                const data = await response.json();
+                showTaskMessage(data.error, true);
+            }
+            await loadTasks();                        // перерисовать: выполненные зачеркнуты
         }
 
-        const task = await response.json();
-        resultBlock.innerHTML =
-            `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
-            `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
-    });
+        // === зан2 зад4: найти задачу по id ===
+        document.getElementById("findTaskBtn").addEventListener("click", async () => {
+            const id = document.getElementById("findTaskId").value;
+            const resultBlock = document.getElementById("findTaskResult");
+
+            const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
+
+            if (!response.ok) {
+                // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
+                const data = await response.json().catch(() => null);
+                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error ?? "Задача не найдена"}</span>`;
+                return;
+            }
+
+            const task = await response.json();
+            resultBlock.innerHTML =
+                `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
+                `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
+        });
 
 
-    // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
-    // ajax тока после добавления/удаления/галочки
-</script>
+        // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
+        // ajax тока после добавления/удаления/галочки
+    </script>
+}

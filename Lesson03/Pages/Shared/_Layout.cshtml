@@ -25,5 +25,9 @@
     <footer class="site-footer">
         &copy; @DateTime.Now.Year Task Manager
     </footer>
+
+    @* зад7: место для скриптов конкретной страницы (section Scripts)
+       required: false - страница может её и не задавать *@
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
