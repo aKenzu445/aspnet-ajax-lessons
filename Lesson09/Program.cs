@@ -232,6 +232,8 @@ tasksApi.MapGet("/", async (int? categoryId, string? search, string? sortBy, int
     }
     if (!string.IsNullOrWhiteSpace(search))           // поиск (дз зан8, живой поиск зад10)
     {
+        // зад10: для проверки гонки тут ВРЕМЕННО стояло
+        // await Task.Delay(Math.Max(0, 1500 - search.Length * 400)); (короткий запрос дольше), убрал
         string text = search.Trim();
         query = query.Where(t => t.Title.Contains(text));
     }

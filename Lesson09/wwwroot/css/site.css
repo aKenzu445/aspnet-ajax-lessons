@@ -321,3 +321,15 @@ input.input-validation-error {
     color: #222;
     text-decoration: none;
 }
+
+/* --- живой поиск (зан9 зад10) --- */
+.live-results {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0;
+}
+
+.live-results li {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+}

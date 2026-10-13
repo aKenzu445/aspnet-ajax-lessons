@@ -169,6 +169,11 @@
         <input id="findTaskId" type="number" min="1" placeholder="id">
         <button id="findTaskBtn">Найти задачу</button>
         <div id="findTaskResult" class="result"></div>
+
+        <!-- зан9 зад10: живой поиск, запрос на каждую букву -->
+        <h3>Живой поиск</h3>
+        <input id="liveSearch" type="text" placeholder="Начните вводить название...">
+        <ul id="liveSearchResults" class="live-results"></ul>
     </section>
 
 @* зад7: скрипт для списка задач - в section Scripts
@@ -353,6 +358,56 @@
                 checkbox.disabled = false;            // разблокировать в любом случае
             }
         }
+
+        // ===== Занятие 9, задача 10. Живой поиск с отменой устаревших запросов =====
+        // Проблема (race condition, "состояние гонки"): пользователь быстро печатает "з", "за", "зад" —
+        // уходят три запроса. Если ответ на "з" придёт ПОСЛЕДНИМ, на экране окажется
+        // устаревший результат. Решение — AbortController: перед новым запросом
+        // ОТМЕНЯЕМ предыдущий, если он ещё не завершился.
+        let currentController = null;      // "пульт отмены" текущего запроса
+        let searchRequestsAborted = 0;      // счётчик отменённых запросов (для проверки)
+
+        async function liveSearch(query) {
+            const results = document.getElementById("liveSearchResults");
+
+            if (currentController) {
+                currentController.abort();  // отменяю прошлый запрос (если еще идет)
+            }
+            if (query.trim() === "") {
+                results.innerHTML = "";
+                currentController = null;
+                return;
+            }
+
+            currentController = new AbortController();
+            try {
+                const response = await fetch(`/api/tasks?search=${encodeURIComponent(query)}&pageSize=10`, {
+                    signal: currentController.signal   // связываем запрос с "пультом отмены"
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    results.innerHTML = `<li class="error">${escapeHtml(data.error.message)}</li>`;
+                    return;
+                }
+
+                results.innerHTML = data.items.length === 0
+                    ? "<li>Ничего не найдено</li>"
+                    : data.items.map(t => `<li>#${t.id} ${escapeHtml(t.title)}</li>`).join("");
+                results.dataset.query = query;   // для проверки: результат какого запроса на экране
+            } catch (err) {
+                if (err.name === "AbortError") {
+                    searchRequestsAborted++;     // отменённый запрос — это нормально, просто выходим
+                    return;
+                }
+                results.innerHTML = `<li class="error">Ошибка сети: ${escapeHtml(err.message)}</li>`;
+            }
+        }
+
+        // input срабатывает на КАЖДОЕ изменение текста
+        document.getElementById("liveSearch").addEventListener("input", (event) => {
+            liveSearch(event.target.value);
+        });
 
         // === зан2 зад4: найти задачу по id ===
         document.getElementById("findTaskBtn").addEventListener("click", async () => {
