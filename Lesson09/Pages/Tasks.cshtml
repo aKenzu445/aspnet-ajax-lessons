@@ -133,12 +133,12 @@
 
         <!-- зад9: добавить через ajax (без перезагрузки) -->
         <h3>Добавить задачу (AJAX)</h3>
-        <input id="newTaskTitle" type="text" placeholder="Новая задача">
+        <input id="newTaskTitle" type="text" placeholder="Новая задача" data-api-field="title">
         @* зан8: категории из таблицы Categories (value = Id) *@
-        <select id="newTaskCategory" asp-items="Model.CategoryOptions">
+        <select id="newTaskCategory" asp-items="Model.CategoryOptions" data-api-field="categoryId">
             <option value="">Без категории</option>
         </select>
-        <input id="newTaskDueDate" type="date" title="Срок (необязательно)">
+        <input id="newTaskDueDate" type="date" title="Срок (необязательно)" data-api-field="dueDate">
         <button id="addTaskBtn">Добавить задачу</button>
         <div id="taskMessage"></div>
 

@@ -299,7 +299,7 @@ tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
     // зан7 зад10: название уже обрезано Trim() выше, длина считается по реальному значению
     if (string.IsNullOrWhiteSpace(created.Title))
     {
-        return ApiError.Validation(new[] { "Название обязательно" });
+        return ApiError.Validation(new[] { new ValidationResult("Название обязательно", new[] { nameof(TaskItem.Title) }) });
     }
 
     var results = new List<ValidationResult>();
@@ -309,14 +309,14 @@ tasksApi.MapPost("/", async (CreateTaskDto request, TaskDbContext db) =>
     // AnyAsync - "есть хоть одна такая строка" (SQL EXISTS)
     if (created.CategoryId.HasValue && !await db.Categories.AnyAsync(c => c.Id == created.CategoryId))
     {
-        results.Add(new ValidationResult("Категория не найдена"));
+        results.Add(new ValidationResult("Категория не найдена", new[] { nameof(TaskItem.CategoryId) }));
         isValid = false;
     }
 
     if (!isValid)
     {
         // 400 и список ошибок: { "errors": ["Название обязательно", ...] }
-        return ApiError.Validation(results.Select(r => r.ErrorMessage));   // 400 VALIDATION_ERROR
+        return ApiError.Validation(results);   // 400 VALIDATION_ERROR + поле (дз)
     }
 
     db.Tasks.Add(created);           // помечаю объект как новый (в базе его еще нет)
@@ -371,13 +371,13 @@ tasksApi.MapPut("/{id:int}", async (int id, UpdateTaskDto request, TaskDbContext
 
     if (request.CategoryId.HasValue && !await db.Categories.AnyAsync(c => c.Id == request.CategoryId))
     {
-        results.Add(new ValidationResult("Категория не найдена"));
+        results.Add(new ValidationResult("Категория не найдена", new[] { nameof(TaskItem.CategoryId) }));
         isValid = false;
     }
 
     if (!isValid)
     {
-        return ApiError.Validation(results.Select(r => r.ErrorMessage));   // 400 VALIDATION_ERROR
+        return ApiError.Validation(results);   // 400 VALIDATION_ERROR + поле (дз)
     }
 
     task.Title = title;              // EF следит за изменениями загруженного объекта...

@@ -1,43 +1,63 @@
-### Проверки занятия 8. Запусти проект занятия 8 (▶). Адрес: http://localhost:5109
-### Для проверки пагинации добавь 12+ задач (запрос ниже можно нажать несколько раз).
+### Проверки занятия 9 (профессиональный API). Запусти проект занятия 9 (▶). Адрес: http://localhost:5109
 
 @host = http://localhost:5109
 @key = lesson2-secret
 
-### Задача 5: задача с категорией (1 Работа, 2 Учёба, 3 Личное — из HasData)
+### Подготовка: задача с категорией (1 Работа, 2 Учёба, 3 Личное)
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Курсовая работа", "categoryId": 2 }
+{ "title": "Изучить ASP.NET", "categoryId": 2 }
 
-### Задача 5: несуществующая категория → 400
+### Задача 2: чистый TaskDto без циклов, с categoryName
+GET {{host}}/api/tasks/1
+
+### Задачи 3, 7: попытка передать id/isDone игнорируется; ответ 201 + заголовок Location
 POST {{host}}/api/tasks
 Content-Type: application/json
 X-Api-Key: {{key}}
 
-{ "title": "Проверка категории", "categoryId": 99 }
+{ "title": "Новая задача", "isDone": true, "id": 999 }
 
-### Задача 4: категории
-GET {{host}}/Categories
+### Задача 4: полное обновление
+PUT {{host}}/api/tasks/1
+Content-Type: application/json
+X-Api-Key: {{key}}
 
-### Задачи 6–7: фильтр по категории (названия категорий через Include)
-GET {{host}}/Tasks?categoryId=2
+{ "title": "Изучить ASP.NET Core", "isDone": true, "categoryId": 2 }
 
-### Задача 9: пагинация
-GET {{host}}/Tasks?pageNumber=2
+### Задача 5: категории с количеством задач
+GET {{host}}/api/categories
 
-### Задача 9: несуществующая страница → 200, пустой список, без ошибки
-GET {{host}}/Tasks?pageNumber=99
+### Задача 8: фильтр + сортировка + страница + конверт с метаданными
+GET {{host}}/api/tasks?categoryId=2&sortBy=title&page=1&pageSize=5
 
-### Задача 10: всё вместе
-GET {{host}}/Tasks?categoryId=2&sortBy=title&pageNumber=2
+### Задача 10: поиск (используется живым поиском)
+GET {{host}}/api/tasks?search=ASP
 
-### ДЗ: поиск + фильтр + сортировка + страница
-GET {{host}}/Tasks?search=Курсовая&categoryId=2&sortBy=title&pageNumber=1
+### Задача 6: единый формат ошибок — несуществующая задача
+GET {{host}}/api/tasks/999
 
-### Задача 8: статистика по категориям
-GET {{host}}/Stats
+### Задача 6: несуществующий адрес API
+GET {{host}}/api/tasks/abc
 
-### API: фильтр по категории
-GET {{host}}/api/tasks?categoryId=2
+### Задача 6 + ДЗ: ошибка валидации с полем
+POST {{host}}/api/tasks
+Content-Type: application/json
+X-Api-Key: {{key}}
+
+{ "title": "аб" }
+
+### Задача 6: без ключа → 401 UNAUTHORIZED
+DELETE {{host}}/api/tasks/1
+
+### Задача 6: ошибка параметров калькулятора
+GET {{host}}/api/sum?a=5
+
+### Задача 6: 500 в едином формате
+GET {{host}}/api/crash-test
+
+### Задача 7: удаление → 204 No Content
+DELETE {{host}}/api/tasks/2
+X-Api-Key: {{key}}

@@ -201,3 +201,24 @@ GET /api/tasks?categoryId=2&sortBy=title&page=2&pageSize=5 → 200
          чекбокс → зачёркнуто; найти 1 → задача; найти 999 → «Ошибка 404: Задача не найдена»;
          живой поиск «Отч» → «#17 Отчёт по работе»; удалить → «Задача №20 удалена» (204)
 ```
+
+## Домашнее задание. Машиночитаемые коды и поведение интерфейса по коду
+
+- Коды ошибок (сделаны ещё в задаче 6): `VALIDATION_ERROR`, `TASK_NOT_FOUND`, `UNAUTHORIZED`, `INVALID_PARAMETERS`, `DIVISION_BY_ZERO`, `TOO_MANY_REQUESTS`, `MAINTENANCE`, `ROUTE_NOT_FOUND`, `INTERNAL_ERROR`.
+- **Сервер** для `VALIDATION_ERROR` сообщает ещё и **поле**: `{ "error": { "message", "code": "VALIDATION_ERROR", "field": "dueDate" } }`. Поле берётся из `ValidationResult.MemberNames` первой ошибки (атрибуты сами сообщают, к какому свойству относятся), с маленькой буквы, как в JSON.
+- **Клиент** (`reactToErrorCode` в `api.js`, `switch` по коду):
+  - `UNAUTHORIZED` → особое сообщение «Нет доступа: нужен правильный API-ключ в заголовке X-Api-Key (см. занятие 2)...»;
+  - `VALIDATION_ERROR` → подсветка поля формы с `data-api-field="<field>"` (красная рамка, фокус) + сообщение. Подсветка снимается при исправлении;
+  - `TOO_MANY_REQUESTS`, `MAINTENANCE` → свои понятные сообщения;
+  - остальные коды → текст `message` с сервера.
+
+**Проверка:**
+```
+POST {"title":"аб"}                       → 400 {..."code":"VALIDATION_ERROR","field":"title"}
+POST {"dueDate":"2020-01-01", ...}        → 400 {..."field":"dueDate"}
+POST {"categoryId":77, ...}               → 400 {..."field":"categoryId"}
+Страница: срок 2020-01-01 → подсвечено поле даты (не название), сообщение «Срок не может быть в прошлом»;
+          после изменения даты подсветка снялась
+API_KEY = "wrong" в консоли → «Нет доступа: нужен правильный API-ключ...»
+apiRequest("/api/nope")  → code ROUTE_NOT_FOUND, «Такого адреса API не существует»
+```

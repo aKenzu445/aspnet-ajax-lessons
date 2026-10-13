@@ -2,8 +2,9 @@
 // раньше в каждом обработчике одно и то же: fetch -> проверка response.ok -> разбор ошибки -> показ -> try/catch
 // теперь всё тут. подключено в _Layout.cshtml, так что есть на всех страницах
 
-// Занятие 2, задача 7: ключ для изменяющих запросов к /api/tasks (без него — 401)
-const API_KEY = "lesson2-secret";
+// зан2 зад7: ключ для запросов которые меняют /api/tasks (без него 401)
+// let а не const - для проверки дз можно в консоли написать API_KEY = "wrong"
+let API_KEY = "lesson2-secret";
 
 // url - адрес api, типа "/api/tasks/5"
 // options - как у fetch: { method, body, signal }. body можно кинуть объектом, сам станет json
@@ -44,9 +45,47 @@ async function apiRequest(url, options = {}) {
         if (err.status === undefined) {
             err.message = `Ошибка сети: ${err.message}`;   // сервак недоступен / нет инета
         }
-        showErrorToast(err.message);
+        reactToErrorCode(err);
         throw err;                               // чтоб вызывающий код тоже мог среагировать
     }
+}
+
+// === дз зан9: разное поведение по коду ошибки ===
+// switch выбирает ветку по err.code (коды в Api/ApiError.cs на серваке)
+function reactToErrorCode(err) {
+    switch (err.code) {
+        case "UNAUTHORIZED":
+            // отдельное сообщение: дело не в данных, а в ключе
+            showErrorToast("Нет доступа: нужен правильный API-ключ в заголовке X-Api-Key (см. занятие 2). " +
+                           "Проверьте значение API_KEY в wwwroot/js/api.js.");
+            break;
+        case "VALIDATION_ERROR":
+            // подсвечиваю поле на которое указал сервак (error.field)
+            highlightField(err.field);
+            showErrorToast(err.message);
+            break;
+        case "TOO_MANY_REQUESTS":
+            showErrorToast("Слишком много запросов. Подождите несколько секунд и повторите.");
+            break;
+        case "MAINTENANCE":
+            showErrorToast("На сервере технические работы. Попробуйте позже.");
+            break;
+        default:
+            showErrorToast(err.message);           // остальные ошибки - как есть
+    }
+}
+
+// поля форм помечены data-api-field="имя поля json" (title, categoryId, dueDate)
+// подсветка снимается как тока начинаешь исправлять
+function highlightField(field) {
+    if (!field) {
+        return;
+    }
+    document.querySelectorAll(`[data-api-field="${field}"]`).forEach(element => {
+        element.classList.add("api-field-error");
+        element.focus();
+        element.addEventListener("input", () => element.classList.remove("api-field-error"), { once: true });
+    });
 }
 
 // всплывашка с ошибкой справа снизу (пропадает через 4 сек)

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Lesson1.WebServer.Api;
 
 // === зан9 зад6: один формат ошибок для всего api ===
@@ -31,6 +33,22 @@ public static class ApiError
     // ошибки валидации: склеиваю в одно через "; "
     public static IResult Validation(IEnumerable<string?> messages) =>
         BadRequest(string.Join("; ", messages), ValidationError);
+
+    // === дз зан9: ошибка валидации с указанием ПОЛЯ ===
+    // { "error": { "message": "...", "code": "VALIDATION_ERROR", "field": "title" } }
+    // field - имя поля в json (с маленькой), клиент его подсветит в форме
+    // беру из MemberNames первой ошибки (атрибуты сами говорят к какому свойству относятся)
+    public static IResult Validation(IReadOnlyList<ValidationResult> results)
+    {
+        string message = string.Join("; ", results.Select(r => r.ErrorMessage));
+        string? member = results.SelectMany(r => r.MemberNames).FirstOrDefault();
+        string? field = member == null ? null : char.ToLowerInvariant(member[0]) + member[1..];
+
+        object body = field == null
+            ? Body(message, ValidationError)
+            : new { error = new { message, code = ValidationError, field } };
+        return Results.Json(body, statusCode: StatusCodes.Status400BadRequest);
+    }
 
     // для middleware (там нет IResult, пишу ответ прям в HttpContext)
     public static Task WriteAsync(HttpContext context, int statusCode, string message, string code)
