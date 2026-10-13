@@ -185,10 +185,9 @@
     <script src="~/js/title-checks.js"></script>
 
     <script>
-        // зан2 зад7: секретный ключ для POST/PUT/DELETE /api/tasks, без него сервак вернет 401
-        const API_KEY = "lesson2-secret";
-
-        // === зан1 зад8 -> зан8: загрузка (обновление) списка ===
+        // зан9 зад11: все запросы к api через apiRequest() (wwwroot/js/api.js):
+        // она ставит X-Api-Key и Content-Type, проверяет код, разбирает ошибки и показывает всплывашку
+        // тут остается тока "что делать с результатом"
 
         // защита от html-инъекций: если назвать задачу "<b>жирно</b>", покажется текстом, а не разметкой
         function escapeHtml(text) {
@@ -197,18 +196,22 @@
             return div.innerHTML;
         }
 
-        // зан8 зад9: список теперь с пагинацией, сортировкой и фильтром НА СЕРВАКЕ
-        // раньше после ajax js тянул GET /api/tasks и рисовал строки сам (taskToHtml) - это сбросило бы страницу и сортировку
-        // теперь прошу ЭТУ ЖЕ страницу (тот же адрес), беру из ответа #taskListBlock и подменяю
-        // плюс: страница/фильтр/сортировка не слетают, а разметка строки тока в partial _TaskItem.cshtml
-        async function loadTasks() {
-            const response = await fetch(location.href);   // ajax запрос за html этой же страницы
+        // сообщение под формой добавления (ошибка красным)
+        function showTaskMessage(text, isError) {
+            document.getElementById("taskMessage").innerHTML =
+                text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
+        }
 
+        // === зан8 зад9: обновление списка после ajax ===
+        // список с пагинацией, сортировкой и фильтром собирает СЕРВЕР. поэтому прошу ЭТУ ЖЕ страницу
+        // (тот же адрес с ?pageNumber=..&categoryId=..), беру из ответа готовый #taskListBlock
+        // (строки рисует partial _TaskItem) и подменяю. это html, а не api, поэтому обычный fetch
+        async function loadTasks() {
+            const response = await fetch(location.href);
             if (!response.ok) {
                 showTaskMessage(`Ошибка ${response.status}`, true);
                 return;
             }
-
             const html = await response.text();                                // ответ - текст html
             const doc = new DOMParser().parseFromString(html, "text/html");     // текст -> документ
             document.getElementById("taskListBlock").innerHTML =
@@ -217,155 +220,96 @@
 
         document.getElementById("loadTasksBtn").addEventListener("click", loadTasks);
 
-        // сообщение под списком (ошибка красным)
-        function showTaskMessage(text, isError) {
-            document.getElementById("taskMessage").innerHTML =
-                text ? `<span class="${isError ? "error" : "ok"}">${escapeHtml(text)}</span>` : "";
-        }
-
-        // === зад9: добавить задачу ===
-        // после POST заново тяну весь список. почему: правда тока на сервере,
-        // так на экране точно то что сохранено (с норм Id) + видно чужие задачи
-        // минус - лишний запрос, но для мелкого списка пофиг
+        // === зан1 зад9: добавить задачу (ajax) ===
+        // после POST обновляю список с сервака, правда тока там
         document.getElementById("addTaskBtn").addEventListener("click", async () => {
             const input = document.getElementById("newTaskTitle");
 
-            // === зан7 зад8: ПЕРВЫЙ рубеж - проверяю в браузере ДО отправки ===
-            // (defense in depth, защита в два слоя) ошибка сразу, без запроса на сервак
+            // зан7 зад8: ПЕРВЫЙ рубеж - проверка в браузере ДО отправки (сразу, без запроса)
+            // ВТОРОЙ рубеж - сервак (400), его ошибки покажет apiRequest
             const problem = findTitleProblem(input.value);   // функция в wwwroot/js/title-checks.js
             if (problem) {
                 showTaskMessage(problem, true);
-                return;   // fetch не делаю - запрос не уходит
+                return;
             }
 
-            // ===== Занятие 9, задача 9. Индикатор загрузки =====
-            // На время запроса кнопка заблокирована и показывает "Сохранение...":
-            // пользователь видит, что "что-то происходит", и не может нажать второй раз
-            // (иначе на медленном интернете получились бы две одинаковые задачи).
+            // зан9 зад9: индикатор загрузки - кнопка заблочена пока идет запрос,
+            // чтоб на медленном инете не нажать второй раз и не сделать дубль
             const button = document.getElementById("addTaskBtn");
             button.disabled = true;
             button.textContent = "Сохранение...";
 
             try {
-                const response = await fetch("/api/tasks", {
+                const category = document.getElementById("newTaskCategory").value;
+                const task = await apiRequest("/api/tasks", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                    body: JSON.stringify({
+                    body: {
                         title: input.value,
-                        // зан8: номер категории (Id) или null если "Без категории"
-                        categoryId: document.getElementById("newTaskCategory").value ? Number(document.getElementById("newTaskCategory").value) : null,
-                        // дз зан7: "2026-10-20" или null если дату не выбрали
-                        dueDate: document.getElementById("newTaskDueDate").value || null
-                    })
+                        categoryId: category ? Number(category) : null,                    // зан8
+                        dueDate: document.getElementById("newTaskDueDate").value || null   // дз зан7
+                    }
                 });
-                const data = await response.json();
-
-                // ВТОРОЙ рубеж — сервер. Его проверку НЕ удаляем: клиентскую можно обойти
-                // (Postman, отключённый JS) или в ней может не оказаться какого-то серверного правила.
-                // Занятие 9, задача 6: все ошибки в одном формате { "error": { "message", "code" } }
-                if (!response.ok) {
-                    showTaskMessage(data.error.message, true);
-                    return;
-                }
 
                 input.value = "";
-                showTaskMessage(`Задача №${data.id} добавлена`, false);
-                await loadTasks();                    // обновляю список без перезагрузки
+                showTaskMessage(`Задача №${task.id} добавлена`, false);
+                await loadTasks();
             } catch (err) {
-                // Ошибка СЕТИ (сервер недоступен, нет интернета) — fetch выбрасывает исключение
-                showTaskMessage(`Ошибка сети: ${err.message}`, true);
+                showTaskMessage(err.message, true);  // ошибку уже показала всплывашка
             } finally {
-                // finally выполняется ВСЕГДА — и после успеха, и после ошибки, и после return.
-                // Поэтому кнопка гарантированно разблокируется.
+                // finally выполняется ВСЕГДА, и после успеха и после ошибки - кнопка точно разблочится
                 button.disabled = false;
                 button.textContent = "Добавить задачу";
             }
         });
 
-        // ===== Задача 10. Удаление задачи =====
-        // Вызывается кнопкой "Удалить" (onclick в разметке строки списка)
-        // Занятие 9, задача 9: button — нажатая кнопка "Удалить" (в разметке передаётся this),
-        // она блокируется на время запроса.
+        // === зан1 зад10: удаление (ajax) ===
+        // button - кнопка которую нажали (this), блочу её пока идет запрос (зан9 зад9)
+        // если ок - сервак отдает 204 без тела (зан9 зад7), apiRequest вернет null
         async function deleteTask(id, button) {
-            if (button) {
-                button.disabled = true;
-                button.textContent = "Удаление...";
-            }
-
+            button.disabled = true;
+            button.textContent = "Удаление...";
             try {
-                const response = await fetch(`/api/tasks/${id}`, {
-                    method: "DELETE",
-                    headers: { "X-Api-Key": API_KEY }
-                });
-                // Занятие 9, задача 7: при успехе сервер отвечает 204 No Content — тела нет,
-                // поэтому response.json() вызываем ТОЛЬКО для ошибки
-                if (!response.ok) {                   // 404 - задачи уже нет
-                    const data = await response.json();
-                    showTaskMessage(data.error.message, true);
-                } else {
-                    showTaskMessage(`Задача №${id} удалена`, false);
-                }
-                await loadTasks();                    // список перерисуется — кнопка исчезнет вместе со строкой
+                await apiRequest(`/api/tasks/${id}`, { method: "DELETE" });
+                showTaskMessage(`Задача №${id} удалена`, false);
+                await loadTasks();                    // строка пропадет вместе с кнопкой
             } catch (err) {
-                showTaskMessage(`Ошибка сети: ${err.message}`, true);
-            } finally {
-                if (button) {                         // если строка осталась (ошибка) — разблокируем
-                    button.disabled = false;
-                    button.textContent = "Удалить";
-                }
+                showTaskMessage(err.message, true);
+                button.disabled = false;              // строка осталась - разблочиваю кнопку
+                button.textContent = "Удалить";
             }
         }
 
-        // === дз: чекбокс выполнено ===
-        // зан6 зад9: отмечаю одним кликом прям в списке, AJAX PUT без перезагрузки
-        // checkbox - это сама галка (в разметке передаю this)
+        // === зан6 зад9: чекбокс выполнено (ajax PUT) ===
+        // checkbox - сама галка (this в разметке)
+        // зан9 зад4: PUT хочет UpdateTaskDto со всеми полями, название и категорию беру из data-атрибутов строки
         async function toggleTask(id, checkbox) {
             const isDone = checkbox.checked;
-            const li = checkbox.closest("li");     // строка где стоит галка
+            const li = checkbox.closest("li");
 
-            // Занятие 9, задача 9: на время запроса галочку нельзя переключить ещё раз
-            checkbox.disabled = true;
-
+            checkbox.disabled = true;                 // зан9 зад9: пока идет запрос
             try {
-                // Занятие 9, задача 4: PUT принимает UpdateTaskDto — полный набор полей.
-                // Название и категорию берём из data-атрибутов строки (их вывел partial _TaskItem).
-                const response = await fetch(`/api/tasks/${id}`, {
+                const task = await apiRequest(`/api/tasks/${id}`, {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json", "X-Api-Key": API_KEY },
-                    body: JSON.stringify({
+                    body: {
                         title: li.dataset.title,
                         isDone: isDone,
                         categoryId: li.dataset.categoryId ? Number(li.dataset.categoryId) : null
-                    })
+                    }
                 });
-
-                if (!response.ok) {
-                    // ошибка (типа 404 - задачу уже удалили): возвращаю галку назад
-                    const data = await response.json().catch(() => null);
-                    checkbox.checked = !isDone;
-                    showTaskMessage(data?.error?.message ?? `Ошибка ${response.status}`, true);
-                    return;
-                }
-
-                // ок: сразу меняю вид строки - класс "done" зачеркивает текст (site.css)
-                // classList.toggle(имя, условие) добавляет класс если true, иначе убирает
-                const task = await response.json();
+                // класс "done" зачеркивает текст, toggle(имя, условие) добавляет или убирает класс
                 li.classList.toggle("done", task.isDone);
             } catch (err) {
-                checkbox.checked = !isDone;           // ошибка сети — откатываем галочку
-                showTaskMessage(`Ошибка сети: ${err.message}`, true);
+                checkbox.checked = !isDone;           // ошибка (типа 404) - возвращаю галку
+                showTaskMessage(err.message, true);
             } finally {
-                checkbox.disabled = false;            // разблокировать в любом случае
+                checkbox.disabled = false;
             }
         }
 
-        // ===== Занятие 9, задача 10. Живой поиск с отменой устаревших запросов =====
-        // Проблема (race condition, "состояние гонки"): пользователь быстро печатает "з", "за", "зад" —
-        // уходят три запроса. Если ответ на "з" придёт ПОСЛЕДНИМ, на экране окажется
-        // устаревший результат. Решение — AbortController: перед новым запросом
-        // ОТМЕНЯЕМ предыдущий, если он ещё не завершился.
+        // === зан9 зад10: живой поиск + отмена старых запросов ===
+        // race condition: быстро печатаешь "з", "за", "зад", а ответ на "з" приходит ПОСЛЕДНИМ и затирает норм результат
+        // AbortController отменяет предыдущий запрос. отмененный apiRequest вернет null - его пропускаю
         let currentController = null;      // "пульт отмены" текущего запроса
-        let searchRequestsAborted = 0;      // счётчик отменённых запросов (для проверки)
 
         async function liveSearch(query) {
             const results = document.getElementById("liveSearchResults");
@@ -381,26 +325,18 @@
 
             currentController = new AbortController();
             try {
-                const response = await fetch(`/api/tasks?search=${encodeURIComponent(query)}&pageSize=10`, {
-                    signal: currentController.signal   // связываем запрос с "пультом отмены"
+                const data = await apiRequest(`/api/tasks?search=${encodeURIComponent(query)}&pageSize=10`, {
+                    signal: currentController.signal
                 });
-                const data = await response.json();
-
-                if (!response.ok) {
-                    results.innerHTML = `<li class="error">${escapeHtml(data.error.message)}</li>`;
-                    return;
+                if (data === null) {
+                    return;                 // запрос отменен - на экране будет результат нового
                 }
-
                 results.innerHTML = data.items.length === 0
                     ? "<li>Ничего не найдено</li>"
                     : data.items.map(t => `<li>#${t.id} ${escapeHtml(t.title)}</li>`).join("");
-                results.dataset.query = query;   // для проверки: результат какого запроса на экране
+                results.dataset.query = query;
             } catch (err) {
-                if (err.name === "AbortError") {
-                    searchRequestsAborted++;     // отменённый запрос — это нормально, просто выходим
-                    return;
-                }
-                results.innerHTML = `<li class="error">Ошибка сети: ${escapeHtml(err.message)}</li>`;
+                results.innerHTML = `<li class="error">${escapeHtml(err.message)}</li>`;
             }
         }
 
@@ -413,29 +349,22 @@
         document.getElementById("findTaskBtn").addEventListener("click", async () => {
             const id = document.getElementById("findTaskId").value;
             const resultBlock = document.getElementById("findTaskResult");
-
-            const response = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
-
-            if (!response.ok) {
-                // 404 - или задачи нет (json с error), или маршрут не подошел (пустой ответ)
-                const data = await response.json().catch(() => null);
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data?.error?.message ?? "Задача не найдена"}</span>`;
-                return;
+            try {
+                const task = await apiRequest(`/api/tasks/${encodeURIComponent(id)}`);
+                resultBlock.innerHTML =
+                    `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
+                    `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
+            } catch (err) {
+                resultBlock.innerHTML = `<span class="error">Ошибка ${err.status ?? ""}: ${escapeHtml(err.message)}</span>`;
             }
-
-            const task = await response.json();
-            resultBlock.innerHTML =
-                `<span class="ok">Задача №${task.id}: <b>${escapeHtml(task.title)}</b> — ` +
-                `${task.isDone ? "выполнена" : "не выполнена"}</span>`;
         });
-
 
         // зан7 зад6: проверка слова "тест" в обычной форме добавления
         attachForbiddenWordsCheck(
             document.getElementById("NewTask_Title").form,
             document.getElementById("NewTask_Title"));
 
-        // зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
+        // зан3 зад5: при открытии список НЕ грузится через ajax - его уже нарисовал сервак
         // ajax тока после добавления/удаления/галочки
     </script>
 }

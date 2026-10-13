@@ -48,86 +48,71 @@
    layout выводит её в RenderSection("Scripts"), поэтому этот js попадает ТОКА на эту страницу *@
 @section Scripts {
     <script>
-        // Занятие 9, задача 6: все ошибки API приходят в едином формате { error: { message, code } }
-        // ===== Задача 4 =====
-        // По клику: AJAX-запрос GET /api/server-info, ответ (JSON) выводим в #result.
-        // Страница при этом НЕ перезагружается — меняется только содержимое блока.
+        // зан9 зад11: все запросы через apiRequest() (wwwroot/js/api.js)
+        // она сама проверяет код, разбирает ошибку { error: { message, code } }, показывает всплывашку и кидает исключение,
+        // ловлю его в catch чтоб еще и красным у поля написать (это требование зан1 зад7)
+
+        // ошибка красным в блоке результата
+        function showError(blockId, err) {
+            document.getElementById(blockId).innerHTML =
+                `<span class="error">Ошибка ${err.status ?? ""}: ${err.message}</span>`;
+        }
+
+        // === зан1 зад4 ===
+        // GET /api/server-info и вывожу в #result без перезагрузки
         async function loadServerInfo() {
-            const response = await fetch("/api/server-info");
-            const info = await response.json();
-
-            if (!response.ok) {                           // типа 429 или 503
-                document.getElementById("result").innerHTML = `<span class="error">Ошибка ${response.status}: ${info.error.message}</span>`;
-                return;
+            try {
+                const info = await apiRequest("/api/server-info");
+                document.getElementById("result").innerHTML =
+                    `Сервер: <b>${info.serverName}</b><br>` +
+                    `Версия: ${info.version}<br>` +
+                    `Время на сервере: ${new Date(info.currentTime).toLocaleString("ru-RU")}`;
+            } catch (err) {
+                showError("result", err);
             }
-
-            document.getElementById("result").innerHTML =
-                `Сервер: <b>${info.serverName}</b><br>` +
-                `Версия: ${info.version}<br>` +
-                `Время на сервере: ${new Date(info.currentTime).toLocaleString("ru-RU")}`;
         }
 
         document.getElementById("serverInfoBtn").addEventListener("click", loadServerInfo);
 
-        // === зад5 ===
-        // числа кидаю прям в адрес: /api/sum?a=...&b=...
-        // encodeURIComponent чтоб спецсимволы адрес не ломали
+        // === зан1 зад5 ===
+        // числа кидаю в адрес: /api/sum?a=...&b=..., encodeURIComponent чтоб адрес не ломался
         document.getElementById("sumBtn").addEventListener("click", async () => {
             const a = document.getElementById("sumA").value;
             const b = document.getElementById("sumB").value;
-
-            const response = await fetch(`/api/sum?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
-            const resultBlock = document.getElementById("sumResult");
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => null);   // 429/503 тоже приходят с json
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${error?.error?.message ?? "введите оба числа"}</span>`;
-                return;
+            try {
+                const data = await apiRequest(`/api/sum?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+                document.getElementById("sumResult").innerHTML =
+                    `<span class="ok">${data.a} + ${data.b} = <b>${data.result}</b></span>`;
+            } catch (err) {
+                showError("sumResult", err);
             }
-
-            const data = await response.json();
-            resultBlock.innerHTML = `<span class="ok">${data.a} + ${data.b} = <b>${data.result}</b></span>`;
         });
 
-        // === зад6 ===
-        // POST: данные в ТЕЛЕ запроса json-ом, а не в адресе как в зад5
-        // в headers говорю серверу что это json, JSON.stringify делает из объекта строку
+        // === зан1 зад6 ===
+        // POST: данные в теле json-ом (не в адресе как в зад5). apiRequest сам делает JSON.stringify и Content-Type
         document.getElementById("echoBtn").addEventListener("click", async () => {
             const text = document.getElementById("echoText").value;
-
-            const response = await fetch("/api/echo", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: text })
-            });
-            const data = await response.json();
-
-            if (!response.ok) {
-                document.getElementById("echoResult").innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error.message}</span>`;
-                return;
+            try {
+                const data = await apiRequest("/api/echo", { method: "POST", body: { text: text } });
+                document.getElementById("echoResult").innerHTML =
+                    `Исходный: ${data.original}<br>` +
+                    `Верхний регистр: <b>${data.uppercase}</b><br>` +
+                    `Длина: ${data.length}`;
+            } catch (err) {
+                showError("echoResult", err);
             }
-
-            document.getElementById("echoResult").innerHTML =
-                `Исходный: ${data.original}<br>` +
-                `Верхний регистр: <b>${data.uppercase}</b><br>` +
-                `Длина: ${data.length}`;
         });
 
-        // === зад7 ===
-        // response.ok = true если код 200-299, иначе ошибка
-        // ошибку пишу красным, а не пытаюсь показать как результат
+        // === зан1 зад7 ===
+        // ошибка (деление на 0, не число) - красным, ок - зеленым
         document.getElementById("divBtn").addEventListener("click", async () => {
             const a = document.getElementById("divA").value;
             const b = document.getElementById("divB").value;
-
-            const response = await fetch(`/api/divide?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
-            const data = await response.json();
-            const resultBlock = document.getElementById("divResult");
-
-            if (!response.ok) {
-                resultBlock.innerHTML = `<span class="error">Ошибка ${response.status}: ${data.error.message}</span>`;
-            } else {
-                resultBlock.innerHTML = `<span class="ok">Результат: <b>${data.result}</b></span>`;
+            try {
+                const data = await apiRequest(`/api/divide?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`);
+                document.getElementById("divResult").innerHTML = `<span class="ok">Результат: <b>${data.result}</b></span>`;
+            } catch (err) {
+                showError("divResult", err);
             }
         });
 

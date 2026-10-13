@@ -333,3 +333,23 @@ input.input-validation-error {
     padding: 4px 0;
     border-bottom: 1px solid #eee;
 }
+
+/* --- всплывашка с ошибкой (зан9 зад11) --- */
+.toast-error {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    max-width: calc(100% - 32px);
+    background: #b0281b;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+/* дз: красим поле которое сервер назвал в ошибке */
+.api-field-error {
+    border-color: #c0392b !important;
+    background: #fff6f5;
+}
