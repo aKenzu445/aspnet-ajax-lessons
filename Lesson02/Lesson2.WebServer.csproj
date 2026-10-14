@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- проект тот же что с зан1, поэтому namespace оставил Lesson1.WebServer. файл назвал по номеру занятия, чтоб rider не путал копии -->
+    <RootNamespace>Lesson1.WebServer</RootNamespace>
+  </PropertyGroup>
+
+</Project>

@@ -35,7 +35,7 @@ $ dotnet ef --version
 Entity Framework Core .NET Command-line Tools
 10.0.11
 ```
-Пакеты записаны в `Lesson1.WebServer.csproj` (`<PackageReference ... />`).
+Пакеты записаны в `Lesson5.WebServer.csproj` (`<PackageReference ... />`).
 
 ## Задача 4. Строка подключения и регистрация DbContext в DI
 

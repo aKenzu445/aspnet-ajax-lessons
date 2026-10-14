@@ -4,7 +4,7 @@
 Выводы и проверки — в [`notes.md`](notes.md).
 
 ## Как запустить
-Rider → `AjaxLessons.slnx` → **Занятие 6** → **Lesson1.WebServer** → **Run**. Адрес: **http://localhost:5106**. База `tasks.db` создаётся автоматически.
+Rider → `AjaxLessons.slnx` → вверху справа конфигурация **Занятие 6** → ▶ (или правый клик по проекту **Lesson6.WebServer** → **Run**). Адрес: **http://localhost:5106**. База `tasks.db` создаётся автоматически.
 
 ## Новое в проекте
 

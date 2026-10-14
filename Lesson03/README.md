@@ -4,7 +4,7 @@
 Выводы по задачам — в [`notes.md`](notes.md).
 
 ## Как запустить
-Rider → `AjaxLessons.slnx` → **Занятие 3** → **Lesson1.WebServer** → **Run**. Адрес: **http://localhost:5103**.
+Rider → `AjaxLessons.slnx` → вверху справа конфигурация **Занятие 3** → ▶ (или правый клик по проекту **Lesson3.WebServer** → **Run**). Адрес: **http://localhost:5103**.
 
 ## Структура Razor Pages
 

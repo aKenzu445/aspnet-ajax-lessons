@@ -4,7 +4,7 @@
 Подробности, выводы и вывод команд — в [`notes.md`](notes.md).
 
 ## Как запустить
-Rider → `AjaxLessons.slnx` → **Занятие 5** → **Lesson1.WebServer** → **Run**. Адрес: **http://localhost:5105**.
+Rider → `AjaxLessons.slnx` → вверху справа конфигурация **Занятие 5** → ▶ (или правый клик по проекту **Lesson5.WebServer** → **Run**). Адрес: **http://localhost:5105**.
 База `tasks.db` создаётся/обновляется **автоматически** при запуске (`db.Database.Migrate()` в `Program.cs`). Вручную то же делает команда `dotnet ef database update` в папке `Lesson05`.
 
 ## Новое в проекте
@@ -34,7 +34,7 @@ Rider → `AjaxLessons.slnx` → **Занятие 5** → **Lesson1.WebServer** 
 | № | Задача | Где | Как проверить |
 |---|---|---|---|
 | 1 | Данные пропадают при перезапуске | `notes.md` | Было: после перезапуска только 3 стартовые задачи |
-| 2 | Пакеты EF Core + `dotnet-ef` | `Lesson1.WebServer.csproj` | `dotnet ef --version` → 10.0.11 |
+| 2 | Пакеты EF Core + `dotnet-ef` | `Lesson5.WebServer.csproj` | `dotnet ef --version` → 10.0.11 |
 | 3 | Сущность и `TaskDbContext` | `Models/TaskItem.cs`, `Data/TaskDbContext.cs` | Проект компилируется |
 | 4 | Строка подключения + DI | `appsettings.json`, `AddDbContext` в `Program.cs` | Сервер стартует, `tasks.db` ещё нет |
 | 5 | Миграция `InitialCreate` | `Migrations/` | `Up()` → `CreateTable("Tasks")`, `Down()` → `DropTable`; появился `tasks.db` |

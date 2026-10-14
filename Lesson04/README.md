@@ -4,7 +4,7 @@
 Выводы и эксперименты по задачам — в [`notes.md`](notes.md).
 
 ## Как запустить
-Rider → `AjaxLessons.slnx` → **Занятие 4** → **Lesson1.WebServer** → **Run**. Адрес: **http://localhost:5104**.
+Rider → `AjaxLessons.slnx` → вверху справа конфигурация **Занятие 4** → ▶ (или правый клик по проекту **Lesson4.WebServer** → **Run**). Адрес: **http://localhost:5104**.
 
 ## Четыре механизма — где использованы
 

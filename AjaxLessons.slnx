@@ -3,27 +3,27 @@
     <Project Path="Lesson01/Lesson1.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 2/">
-    <Project Path="Lesson02/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson02/Lesson2.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 3/">
-    <Project Path="Lesson03/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson03/Lesson3.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 4/">
-    <Project Path="Lesson04/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson04/Lesson4.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 5/">
-    <Project Path="Lesson05/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson05/Lesson5.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 6/">
-    <Project Path="Lesson06/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson06/Lesson6.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 7/">
-    <Project Path="Lesson07/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson07/Lesson7.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 8/">
-    <Project Path="Lesson08/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson08/Lesson8.WebServer.csproj" />
   </Folder>
   <Folder Name="/Занятие 9/">
-    <Project Path="Lesson09/Lesson1.WebServer.csproj" />
+    <Project Path="Lesson09/Lesson9.WebServer.csproj" />
   </Folder>
 </Solution>
